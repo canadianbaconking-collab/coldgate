@@ -2,7 +2,7 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.1.1 contains `@frostedlogic/authority`, a reusable TypeScript authority record, and `approval-doctor`, a local static analysis CLI. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.2.0 contains `@frostedlogic/authority`, a reusable TypeScript authority record, and `approval-doctor`, a local static analysis CLI. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
@@ -20,6 +20,29 @@ npm test
 ```
 
 `approval-doctor` also accepts `scan` before the input path. An explicit JSON file may have any name. For a directory, it checks `mcp.json`, `.mcp.json`, `claude_desktop_config.json`, `coldgate.json`, `openai-hosted-mcp.json`, `openai-responses.json`, and `tools.json` in the root, `.cursor`, `.vscode`, and `fixtures`. It does not recursively crawl arbitrary source trees. No matches, bad JSON, or unreadable input exits 2. `--fail-on warning` exits 1 when a WARN finding occurs; otherwise findings do not change exit status. A zero exit code does not certify a tool.
+
+## Connect native approval policy to a saved tool inventory
+
+```powershell
+npm exec -- approval-doctor examples/connected
+npm exec -- approval-doctor examples/connected --format json
+```
+
+The runnable example joins native OpenAI Responses MCP settings to two saved tool catalogs. It demonstrates per-tool approval selectors and server-wide `require_approval: "always"`. Example endpoints and catalog contents are synthetic; they do not represent a live connected account. Replace them with your own native config and saved `tools/list` results. Coldgate never contacts those endpoints.
+
+Create `approval-doctor.project.json` beside your real configuration:
+
+```json
+{
+  "version": 1,
+  "config": "responses.json",
+  "inventories": [
+    {"server": "repository", "file": "catalogs/repository.tools.json"}
+  ]
+}
+```
+
+`server` must exactly match the native configuration's `server_label`. Then run `npm exec -- approval-doctor .` in that directory. A root connection manifest takes precedence over loose-file discovery, so the same config and catalog are not counted twice. See [connected setup](docs/CONNECTED_CONFIGS.md) for native fields, trust boundaries, and unsupported selectors.
 
 ## What is supported
 

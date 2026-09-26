@@ -21,9 +21,10 @@ export interface Capability {
   /** Only allowlisted nonsecret raw metadata. Original JSON is never returned. */
   annotations: { readOnlyHint?: boolean; destructiveHint?: boolean; openWorldHint?: boolean; idempotentHint?: boolean };
 }
-export interface AuthorityRecord { id: string; principal: Principal; capability: Capability; inventory: Claim<'snapshot' | 'unknown'>; }
+export interface AuthorityRecord { id: string; principal: Principal; capability: Capability; inventory: Claim<'snapshot' | 'unknown'>; selection?: Claim<'INCLUDED' | 'CONDITIONAL'>; }
 export interface Finding {
   rule: string; level: 'OK' | 'INFO' | 'REVIEW' | 'WARN' | 'UNKNOWN'; recordId: string;
   observed: string; inferred: string; reason: string; missing: string; evidence: string[];
 }
-export interface Report { schemaVersion: '0.1'; source: string; format: string; records: AuthorityRecord[]; findings: Finding[]; errors: string[]; }
+export interface InventoryConnection { provider: string; configSource: string; catalogSource: string; sha256: string; listed: number; included: number; excluded: number; missing: number; selectionConditional: boolean; }
+export interface Report { connections?: InventoryConnection[]; schemaVersion: '0.1'; source: string; format: string; records: AuthorityRecord[]; findings: Finding[]; errors: string[]; }

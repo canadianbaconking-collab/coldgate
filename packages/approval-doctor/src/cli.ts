@@ -1,9 +1,10 @@
 import { lstat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { scanFile } from '../../authority/src/scan.ts';
+import { scanProject } from '../../authority/src/project.ts';
 import type { Report } from '../../authority/src/model.ts';
 
-const CANDIDATES = ['mcp.json', '.mcp.json', 'claude_desktop_config.json', 'coldgate.json', 'openai-hosted-mcp.json', 'openai-responses.json', 'tools.json'];
+const CANDIDATES = ['approval-doctor.project.json', 'mcp.json', '.mcp.json', 'claude_desktop_config.json', 'coldgate.json', 'openai-hosted-mcp.json', 'openai-responses.json', 'tools.json'];
 const SUBDIRS = ['', '.cursor', '.vscode', 'fixtures'];
 
 export function renderText(reports: Report[]): string {
@@ -11,9 +12,15 @@ export function renderText(reports: Report[]): string {
   for (const report of reports) {
     lines.push(`${report.source} (${report.format})`);
     for (const error of report.errors) lines.push(`  ERROR ${error}`);
+    for (const link of report.connections ?? []) {
+      lines.push(`  Connected ${link.provider}: ${link.configSource} + ${link.catalogSource}`);
+      lines.push(`    inventory: ${link.listed} listed; ${link.included} selected; ${link.excluded} excluded; ${link.missing} configured names missing`);
+      lines.push(`    catalog sha256: ${link.sha256}`);
+    }
     for (const r of report.records) {
       const c = r.capability;
       lines.push(`  ${r.id} | ${c.effects.value.join(', ')} [${c.effects.status}] | approval ${c.approval.value} [${c.approval.status}]`);
+      if (r.selection) lines.push(`    selection: ${r.selection.value} [${r.selection.status}]`);
       lines.push(`    scope: ${c.boundaries.map(b => `${b.kind}:${b.value} [${b.claim.status}]`).join(', ')}`);
       lines.push(`    evidence: effects=${c.effects.source}; approval=${c.approval.source}`);
       for (const f of report.findings.filter(f => f.recordId === r.id)) {
@@ -32,7 +39,7 @@ export function renderText(reports: Report[]): string {
 function renderSarif(reports: Report[]): object {
   const all = reports.flatMap(report => report.findings.map(finding => ({ report, finding })));
   return { version: '2.1.0', $schema: 'https://json.schemastore.org/sarif-2.1.0.json', runs: [{
-    tool: { driver: { name: 'Approval Doctor', version: '0.1.1', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
+    tool: { driver: { name: 'Approval Doctor', version: '0.2.0', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
     invocations: [{ executionSuccessful: !reports.some(r => r.errors.length),
       toolExecutionNotifications: reports.flatMap(r => r.errors.map(message => ({ level: 'error', message: { text: `${r.source}: ${message}` } }))) }],
     results: all.map(({ report, finding }) => ({ ruleId: finding.rule, level: finding.level === 'WARN' ? 'warning' : 'note',
@@ -45,6 +52,10 @@ async function collect(path: string): Promise<string[]> {
   if (info.isSymbolicLink()) throw Error('Symlink inputs are not supported');
   if (info.isFile()) return [path];
   if (!info.isDirectory()) throw Error('Input must be a file or directory');
+  try {
+    const manifest = join(path, 'approval-doctor.project.json');
+    if ((await lstat(manifest)).isFile()) return [manifest];
+  } catch { /* no project manifest */ }
   const found: string[] = [];
   for (const dir of SUBDIRS) {
     if (dir) { try { if (!(await lstat(join(path, dir))).isDirectory()) continue; } catch { continue; } }
@@ -74,7 +85,7 @@ export async function main(args: string[], output = process.stdout, errors = pro
     try { files.push(...await collect(input)); } catch { errors.write(`Unable to inspect input: ${input}\n`); return 2; }
   }
   if (!files.length) { errors.write('No supported configuration files found. Pass an explicit JSON file or add mcp.json, tools.json, or openai-hosted-mcp.json.\n'); return 2; }
-  const reports = await Promise.all([...new Set(files)].sort().map(scanFile));
+  const reports = await Promise.all([...new Set(files)].sort().map(file => basename(file) === 'approval-doctor.project.json' ? scanProject(file) : scanFile(file)));
   output.write(format === 'text' ? renderText(reports) : JSON.stringify(format === 'sarif' ? renderSarif(reports) : reports, null, 2) + '\n');
   return reports.some(r => r.errors.length) ? 2 : failOn === 'warning' && reports.some(r => r.findings.some(f => f.level === 'WARN')) ? 1 : 0;
 }

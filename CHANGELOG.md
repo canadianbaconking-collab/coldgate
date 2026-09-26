@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 — Connect native approval policy and saved catalogs
+
+- Add explicit server-to-catalog bindings through `approval-doctor.project.json`.
+- Join native OpenAI Responses MCP approval settings to saved tool definitions.
+- Preserve separate config/catalog evidence and SHA-256 catalog fingerprints.
+- Apply name allowlists, retain missing configured names as UNKNOWN inventory, and report unresolved annotation filters.
+- Reject missing, orphaned, duplicate, mismatched, paginated, and unsafe file bindings.
+- Never import catalog-supplied approval policy or resource restrictions as client controls.
+- Add two-server runnable example, full setup documentation, and 16 connection regression tests (42 tests total).
+
 ## 0.1.1 — Input validation and failure reporting
 
 - Reject malformed tool/server rows, duplicate names, incompatible root containers, invalid approval selectors, and normalized identity collisions.

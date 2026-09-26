@@ -69,7 +69,7 @@ function clientApproval(tool: Record<string, unknown>, server: Record<string, un
   if (typeof server.requiresApproval === 'boolean') return declared('INHERITED', `${serverPath}.requiresApproval`, `Server rule says ${server.requiresApproval ? 'required' : 'not required'}; applicability unverified`);
   return unknown('UNSPECIFIED', path);
 }
-function hostedApproval(policy: unknown, toolName: string, path: string, key = 'requireApproval'): Claim<Approval> {
+export function resolveApproval(policy: unknown, toolName: string, path: string, key = 'requireApproval'): Claim<Approval> {
   if (policy === 'always' || policy === 'never') return declared(policy === 'always' ? 'REQUIRED' : 'NOT_REQUIRED', `${path}.${key}`, 'OpenAI MCP policy declaration');
   const p = object(policy);
   if (p) {
@@ -131,7 +131,7 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
         if (Array.isArray(server.allowed_tools) && !server.allowed_tools.length) continue;
         for (const name of names.length ? names : ['*'])
           add(normalize(label, name, {}, {}, `${path}.allowed_tools.${safe(name)}`, path, false,
-            hostedApproval(server.require_approval, name, path, 'require_approval')));
+            resolveApproval(server.require_approval, name, path, 'require_approval')));
       }
     } else {
       report.format = 'mcp-tools-snapshot';
@@ -145,7 +145,7 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
       if (!server || !label) { report.errors.push(`hostedMcpTools[${i}] requires serverLabel`); continue; }
       const path = `hostedMcpTools[${i}]`, tools = entries(server.tools);
       for (const [name, tool] of tools.length ? tools : [['*', {}] as [string, Record<string, unknown>]])
-        add(normalize(label, name, tool, server, `${path}.tools.${safe(name)}`, path, !!tools.length, hostedApproval(server.requireApproval, name, path)));
+        add(normalize(label, name, tool, server, `${path}.tools.${safe(name)}`, path, !!tools.length, resolveApproval(server.requireApproval, name, path)));
     }
   } else if (root.mcpServers !== undefined || root.servers !== undefined) {
     report.format = 'mcp-client-json';

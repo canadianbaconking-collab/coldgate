@@ -1,0 +1,9 @@
+{
+  "serverName": "repository",
+  "tools": [
+    {"name": "list_issues", "inputSchema": {"type": "object"}, "annotations": {"readOnlyHint": true, "openWorldHint": false}},
+    {"name": "create_issue", "inputSchema": {"type": "object"}, "annotations": {"readOnlyHint": false, "destructiveHint": false}},
+    {"name": "delete_issue", "inputSchema": {"type": "object"}, "annotations": {"readOnlyHint": false, "destructiveHint": true}},
+    {"name": "shell_exec", "inputSchema": {"type": "object"}, "annotations": {"openWorldHint": true}}
+  ]
+}

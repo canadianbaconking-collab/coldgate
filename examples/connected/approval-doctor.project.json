@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "config": "responses.json",
+  "inventories": [
+    { "server": "repository", "file": "catalogs/repository.tools.json" },
+    { "server": "research", "file": "catalogs/research.tools.json" }
+  ]
+}

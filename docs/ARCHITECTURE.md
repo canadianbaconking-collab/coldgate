@@ -13,3 +13,9 @@ The decisive missing link for later AuthorityDiff is a **stable tool identity pa
 `validate.ts` checks the recognized container, names, annotation booleans, scope arrays, overlay controls, and approval-selector shapes before normalization. Invalid documents produce diagnostics without partial records. Diagnostic messages use fixed field names and indices rather than input values. Normalized identity collisions are detected before the report is returned. The validator deliberately rejects unsupported/mixed tool formats instead of ignoring their entries.
 
 SARIF records analysis failures in `runs[].invocations[]`, independently of security findings. A successful invocation says only that the supported input was analyzed. Schema version remains 0.1; package version is 0.1.1.
+
+## Connected configurations (0.2.0)
+
+`project.ts` reads a Coldgate project manifest and binds every server in one native Responses MCP configuration to one catalog. It normalizes only standard tool names and annotation hints from the catalog, then assigns approval from the native config and reruns the deterministic rules. Catalog-only tools excluded by an explicit name allowlist do not generate current-capability findings. Missing configured names produce unknown-inventory records and CG010. Annotation-dependent selection retains candidates with a CONDITIONAL selection and CG011.
+
+Reports add optional `connections` metadata and optional per-record `selection` claims. The schema remains additive under 0.1. Fingerprints identify the exact catalog bytes, including JSON-RPC envelopes; they do not authenticate the catalog or establish freshness. Config hashes are deliberately omitted to avoid fingerprinting credentials. Binding by server label is an explicit user declaration, not an independently verified server identity.
