@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFile } from 'node:fs/promises';
 import { scanConfig, scanFile, inferEffects } from '../packages/authority/src/index.ts';
 import { main, renderText } from '../packages/approval-doctor/src/cli.ts';
 
@@ -54,6 +55,23 @@ test('OpenAI hosted MCP JSON resolves explicit tool names, preserves conditional
   assert.ok(!JSON.stringify(report).includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
 });
 
+test('native Responses MCP request distinguishes allowlist from discovered inventory', async () => {
+  const report = await scanFile(fixture('openai-responses.json'));
+  assert.equal(report.format, 'openai-responses-mcp-json');
+  assert.equal(report.records.length, 3);
+  assert.equal(report.records.find(r => r.id === 'github.delete_issue')?.capability.approval.value, 'REQUIRED');
+  assert.equal(report.records.find(r => r.id === 'github.list_issues')?.capability.approval.value, 'NOT_REQUIRED');
+  assert.equal(report.records.find(r => r.id === 'github.send_email')?.capability.approval.value, 'CONDITIONAL');
+  assert.ok(report.records.every(r => r.inventory.status === 'UNKNOWN'));
+  assert.ok(!JSON.stringify(report).includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
+});
+
+test('golden human report stays understandable', async () => {
+  const report = await scanFile(fixture('tools.json'));
+  const golden = await readFile(new URL('../example-output.txt', import.meta.url), 'utf8');
+  assert.equal(renderText([report]), golden);
+});
+
 test('malformed and unsupported input cannot echo data', async () => {
   assert.deepEqual(scanConfig({ mcpServers: [] }, 'bad.json').errors, ['mcpServers must be an object']);
   assert.equal(scanConfig({ foo: 'password=SECRET' }, 'bad.json').records.length, 0);
@@ -66,7 +84,7 @@ test('directory discovery, JSON, SARIF and warning gate work from clean invocati
   assert.equal(exit, 1);
   assert.equal(err.get(), '');
   const reports = JSON.parse(out.get());
-  assert.equal(reports.length, 3);
+  assert.equal(reports.length, 4);
   assert.ok(!out.get().includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
   const sarif = capture();
   assert.equal(await main(['fixtures/tools.json', '--format', 'sarif'], sarif.stream, capture().stream), 0);

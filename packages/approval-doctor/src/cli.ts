@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { scanFile } from '../../authority/src/scan.ts';
 import type { Report } from '../../authority/src/model.ts';
 
-const CANDIDATES = ['mcp.json', '.mcp.json', 'claude_desktop_config.json', 'coldgate.json', 'openai-hosted-mcp.json', 'tools.json'];
+const CANDIDATES = ['mcp.json', '.mcp.json', 'claude_desktop_config.json', 'coldgate.json', 'openai-hosted-mcp.json', 'openai-responses.json', 'tools.json'];
 const SUBDIRS = ['', '.cursor', '.vscode', 'fixtures'];
 
 export function renderText(reports: Report[]): string {
@@ -44,9 +44,12 @@ async function collect(path: string): Promise<string[]> {
   if (info.isFile()) return [path];
   if (!info.isDirectory()) throw Error('Input must be a file or directory');
   const found: string[] = [];
-  for (const dir of SUBDIRS) for (const name of CANDIDATES) {
+  for (const dir of SUBDIRS) {
+    if (dir) { try { if (!(await lstat(join(path, dir))).isDirectory()) continue; } catch { continue; } }
+    for (const name of CANDIDATES) {
     const file = join(path, dir, name);
     try { if ((await lstat(file)).isFile()) found.push(file); } catch { /* candidate absent */ }
+    }
   }
   return found;
 }

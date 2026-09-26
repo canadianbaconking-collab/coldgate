@@ -1,0 +1,16 @@
+{
+  "model": "example-model",
+  "tools": [
+    {
+      "type": "mcp",
+      "server_label": "github",
+      "server_url": "https://example.invalid/mcp?token=EXAMPLE_SECRET_DO_NOT_EXPORT",
+      "authorization": "EXAMPLE_SECRET_DO_NOT_EXPORT",
+      "allowed_tools": ["list_issues", "delete_issue", "send_email"],
+      "require_approval": {
+        "always": {"tool_names": ["delete_issue"]},
+        "never": {"tool_names": ["list_issues"]}
+      }
+    }
+  ]
+}

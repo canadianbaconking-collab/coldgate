@@ -1,6 +1,6 @@
 # Authority Model and Approval Doctor v0.1
 
-`packages/authority/src/model.ts` defines principals, capabilities, effects, resource boundaries, approval states, and claims with status and provenance. `scan.ts` accepts three static JSON shapes and normalizes them. `rules.ts` turns records into deterministic findings. `packages/approval-doctor/src/cli.ts` discovers files and formats text, JSON, or SARIF. No network calls or process execution occur during scanning.
+`packages/authority/src/model.ts` defines principals, capabilities, effects, resource boundaries, approval states, and claims with status and provenance. `scan.ts` accepts four static JSON shapes and normalizes them. `rules.ts` turns records into deterministic findings. `packages/approval-doctor/src/cli.ts` discovers files and formats text, JSON, or SARIF. No network calls or process execution occur during scanning.
 
 A capability includes provider and operation; a multi-effect summary; zero or more declared resource boundaries; external destination; credential names and scopes; approval, delegation and persistence claims; and allowlisted MCP annotation booleans. Currently unknown destination/delegation/persistence are explicit UNKNOWN claims. Principal defaults to the MCP server in these inputs; downstream agents or user identities cannot be inferred from a server declaration. Inventory is a static snapshot or unknown.
 

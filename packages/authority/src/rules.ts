@@ -7,7 +7,7 @@ export function assess(record: AuthorityRecord): Finding[] {
   const add = (rule: string, level: Finding['level'], observed: string, inferred: string, reason: string, missing: string, evidence: string[]) =>
     result.push({ rule, level, recordId: record.id, observed, inferred, reason, missing, evidence });
   const consequential = effects.value.some(x => ['WRITE', 'DESTRUCTIVE', 'EXECUTE', 'EXTERNAL_COMMUNICATION', 'OPEN_WORLD'].includes(x));
-  if (record.inventory.value === 'unknown') add('CG001', 'UNKNOWN', 'Server is configured; no tool catalog is present.', 'Actual operations are unknown.', 'The client config does not enumerate server tools.', 'A trusted tools/list snapshot or runtime inventory.', [record.inventory.source]);
+  if (record.inventory.value === 'unknown') add('CG001', 'UNKNOWN', 'The actual tool catalog is absent.', 'Available operations may differ from configured names.', 'A server declaration or allowed-tools selector is not a live inventory.', 'A trusted tools/list snapshot or runtime inventory.', [record.inventory.source]);
   if (effects.value.includes('UNKNOWN')) add('CG002', 'UNKNOWN', 'No supported effect hint.', 'None.', 'A name without a recognized verb cannot establish behavior.', 'Tool implementation or independent observation.', [effects.source]);
   if (consequential && ['UNSPECIFIED', 'NOT_REQUIRED', 'UNKNOWN'].includes(approval.value)) {
     const dangerous = effects.value.some(x => ['DESTRUCTIVE', 'EXECUTE', 'OPEN_WORLD'].includes(x));

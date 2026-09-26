@@ -65,16 +65,16 @@ function clientApproval(tool: Record<string, unknown>, server: Record<string, un
   if (typeof server.requiresApproval === 'boolean') return declared('INHERITED', `${serverPath}.requiresApproval`, `Server rule says ${server.requiresApproval ? 'required' : 'not required'}; applicability unverified`);
   return unknown('UNSPECIFIED', path);
 }
-function hostedApproval(policy: unknown, toolName: string, path: string): Claim<Approval> {
-  if (policy === 'always' || policy === 'never') return declared(policy === 'always' ? 'REQUIRED' : 'NOT_REQUIRED', `${path}.requireApproval`, 'OpenAI hosted MCP policy declaration');
+function hostedApproval(policy: unknown, toolName: string, path: string, key = 'requireApproval'): Claim<Approval> {
+  if (policy === 'always' || policy === 'never') return declared(policy === 'always' ? 'REQUIRED' : 'NOT_REQUIRED', `${path}.${key}`, 'OpenAI MCP policy declaration');
   const p = object(policy);
   if (p) {
-    const always = strings(object(p.always)?.toolNames);
-    const never = strings(object(p.never)?.toolNames);
-    if (always?.includes(toolName) && never?.includes(toolName)) return unknown('UNKNOWN', `${path}.requireApproval`);
-    if (always?.includes(toolName)) return declared('REQUIRED', `${path}.requireApproval.always.toolNames`);
-    if (never?.includes(toolName)) return declared('NOT_REQUIRED', `${path}.requireApproval.never.toolNames`);
-    return declared('CONDITIONAL', `${path}.requireApproval`, 'Selector or unmatched tool needs effective policy resolution');
+    const always = strings(object(p.always)?.toolNames) ?? strings(object(p.always)?.tool_names);
+    const never = strings(object(p.never)?.toolNames) ?? strings(object(p.never)?.tool_names);
+    if (always?.includes(toolName) && never?.includes(toolName)) return unknown('UNKNOWN', `${path}.${key}`);
+    if (always?.includes(toolName)) return declared('REQUIRED', `${path}.${key}.always.${key === 'requireApproval' ? 'toolNames' : 'tool_names'}`);
+    if (never?.includes(toolName)) return declared('NOT_REQUIRED', `${path}.${key}.never.${key === 'requireApproval' ? 'toolNames' : 'tool_names'}`);
+    return declared('CONDITIONAL', `${path}.${key}`, 'Selector or unmatched tool needs effective policy resolution');
   }
   return unknown('UNSPECIFIED', path);
 }
@@ -107,9 +107,24 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
   if (!root) { report.errors.push('Root must be a JSON object'); return report; }
   const add = (r: AuthorityRecord) => { report.records.push(r); report.findings.push(...assess(r)); };
   if (Array.isArray(root.tools) && root.mcpServers === undefined && root.servers === undefined) {
-    report.format = 'mcp-tools-snapshot';
-    const provider = string(root.serverName) ?? 'snapshot';
-    for (const [name, tool] of entries(root.tools)) add(normalize(provider, name, tool, {}, `tools.${safe(name)}`, 'serverName', true));
+    if (root.tools.some(x => object(x)?.type === 'mcp')) {
+      report.format = 'openai-responses-mcp-json';
+      for (const [i, value] of root.tools.entries()) {
+        const server = object(value);
+        if (server?.type !== 'mcp') continue;
+        const label = string(server.server_label);
+        if (!label) { report.errors.push(`tools[${i}] MCP entry requires server_label`); continue; }
+        const path = `tools[${i}]`;
+        const names = strings(server.allowed_tools) ?? strings(object(server.allowed_tools)?.tool_names) ?? [];
+        for (const name of names.length ? names : ['*'])
+          add(normalize(label, name, {}, {}, `${path}.allowed_tools.${safe(name)}`, path, false,
+            name === '*' ? unknown('UNKNOWN', path) : hostedApproval(server.require_approval, name, path, 'require_approval')));
+      }
+    } else {
+      report.format = 'mcp-tools-snapshot';
+      const provider = string(root.serverName) ?? 'snapshot';
+      for (const [name, tool] of entries(root.tools)) add(normalize(provider, name, tool, {}, `tools.${safe(name)}`, 'serverName', true));
+    }
   } else if (Array.isArray(root.hostedMcpTools)) {
     report.format = 'openai-hosted-mcp-json';
     for (const [i, item] of root.hostedMcpTools.entries()) {
