@@ -3,7 +3,7 @@ Frosted Logic — Approval Doctor
 tools.json (mcp-tools-snapshot)
   github.delete_issue | READ, WRITE, DESTRUCTIVE [DECLARED] | approval UNSPECIFIED [UNKNOWN]
     scope: unknown:unknown [UNKNOWN]
-    evidence: effects=tools.delete_issue.annotations + tools.delete_issue.annotations + tools.delete_issue.annotations; approval=tools.delete_issue
+    evidence: effects=tools.delete_issue.annotations; approval=tools.delete_issue
     WARN CG003: Approval is UNSPECIFIED (UNKNOWN).
       Inference: Potential READ, WRITE, DESTRUCTIVE from declared evidence. Why: A consequential operation may run without a confirmed approval boundary.
       Missing: Effective approval behavior and an explicit policy for this operation.
@@ -30,7 +30,7 @@ tools.json (mcp-tools-snapshot)
       Missing: Tool implementation or independent observation.
   github.push_files | WRITE, DESTRUCTIVE, OPEN_WORLD, EXTERNAL_COMMUNICATION [INFERRED] | approval UNSPECIFIED [UNKNOWN]
     scope: repository_pattern:* [DECLARED]
-    evidence: effects=tools.push_files.annotations + tools.push_files.annotations + tools.push_files.annotations + tools.push_files.name; approval=tools.push_files
+    evidence: effects=tools.push_files.annotations + tools.push_files.name; approval=tools.push_files
     WARN CG003: Approval is UNSPECIFIED (UNKNOWN).
       Inference: Potential WRITE, DESTRUCTIVE, OPEN_WORLD, EXTERNAL_COMMUNICATION from inferred evidence. Why: A consequential operation may run without a confirmed approval boundary.
       Missing: Effective approval behavior and an explicit policy for this operation.

@@ -23,7 +23,10 @@ export function inferEffects(name: string): Effect[] {
   const e: Effect[] = [];
   if (has('read', 'get', 'list', 'search', 'find', 'inspect', 'view')) e.push('READ');
   if (has('write', 'create', 'update', 'edit', 'commit', 'push', 'upload', 'deploy', 'post', 'send', 'publish')) e.push('WRITE');
-  if (has('delete', 'remove', 'destroy', 'drop', 'purge', 'overwrite', 'reset', 'force')) e.push('DESTRUCTIVE');
+  if (has('delete', 'remove', 'destroy', 'drop', 'purge', 'overwrite', 'reset', 'force')) {
+    if (!e.includes('WRITE')) e.push('WRITE');
+    e.push('DESTRUCTIVE');
+  }
   if (has('exec', 'execute', 'shell', 'run', 'spawn', 'eval', 'command')) e.push('EXECUTE');
   if (has('send', 'publish', 'post', 'push', 'upload', 'deploy', 'email', 'message')) e.push('EXTERNAL_COMMUNICATION');
   return e.length ? e : ['UNKNOWN'];
@@ -88,7 +91,7 @@ function normalize(provider: string, name: string, tool: Record<string, unknown>
     principal: { kind: 'mcp_server', name: safe(provider), claim: declared(safe(provider), serverPath) },
     capability: {
       provider: safe(provider), operation: safe(name),
-      effects: claim(evidence.map(e => e.value), aggregateStatus, evidence.map(e => e.source).join(' + '), 'Aggregate status is no stronger than its weakest member; see effectEvidence'),
+      effects: claim(evidence.map(e => e.value), aggregateStatus, [...new Set(evidence.map(e => e.source))].join(' + '), 'Aggregate status is no stronger than its weakest member; see effectEvidence'),
       effectEvidence: evidence,
       boundaries: boundaries(tool, server, path, serverPath), destination: unknown('unknown', path),
       credentialNames: envNames.length ? declared(envNames, `${serverPath}.env keys`) : unknown([], serverPath),
