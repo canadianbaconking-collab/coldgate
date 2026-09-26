@@ -1,56 +1,75 @@
+import { lstat } from 'node:fs/promises';
+import { join } from 'node:path';
 import { scanFile } from '../../authority/src/scan.ts';
 import type { Report } from '../../authority/src/model.ts';
 
-function renderText(reports: Report[]): string {
-  const lines: string[] = [];
+const CANDIDATES = ['mcp.json', '.mcp.json', 'claude_desktop_config.json', 'coldgate.json', 'openai-hosted-mcp.json', 'tools.json'];
+const SUBDIRS = ['', '.cursor', '.vscode', 'fixtures'];
+
+export function renderText(reports: Report[]): string {
+  const lines = ['Frosted Logic — Approval Doctor', ''];
   for (const report of reports) {
-    lines.push(report.source);
+    lines.push(`${report.source} (${report.format})`);
     for (const error of report.errors) lines.push(`  ERROR ${error}`);
-    for (const record of report.records) {
-      const { effect, authorization } = record.capability;
-      lines.push(`  ${record.id}  effect=${effect.value}(${effect.status})  approval=${authorization.approval.value}(${authorization.approval.status})`);
-      for (const finding of report.findings.filter(f => f.recordId === record.id))
-        lines.push(`    ${finding.level.toUpperCase()} ${finding.id} ${finding.message}`);
+    for (const r of report.records) {
+      const c = r.capability;
+      lines.push(`  ${r.id} | ${c.effects.value.join(', ')} [${c.effects.status}] | approval ${c.approval.value} [${c.approval.status}]`);
+      lines.push(`    scope: ${c.boundaries.map(b => `${b.kind}:${b.value} [${b.claim.status}]`).join(', ')}`);
+      lines.push(`    evidence: effects=${c.effects.source}; approval=${c.approval.source}`);
+      for (const f of report.findings.filter(f => f.recordId === r.id)) {
+        lines.push(`    ${f.level} ${f.rule}: ${f.observed}`);
+        lines.push(`      Inference: ${f.inferred} Why: ${f.reason}`);
+        lines.push(`      Missing: ${f.missing}`);
+      }
     }
-    for (const finding of report.findings.filter(f => !report.records.some(r => r.id === f.recordId)))
-      lines.push(`  ${finding.level.toUpperCase()} ${finding.id} ${finding.message}`);
+    lines.push('');
   }
+  const records = reports.flatMap(r => r.records), findings = reports.flatMap(r => r.findings);
+  lines.push(`Summary: ${records.length} entries; ${records.filter(r => r.inventory.value === 'unknown').length} unknown inventories; ${records.filter(r => r.capability.approval.value === 'REQUIRED').length} explicit required approvals; ${records.filter(r => r.capability.approval.value === 'UNSPECIFIED').length} unspecified approvals; ${findings.filter(f => f.level === 'WARN').length} warnings; ${findings.filter(f => f.level === 'REVIEW').length} reviews.`);
+  lines.push('Static declarations and hints do not prove runtime enforcement.');
   return lines.join('\n') + '\n';
 }
-
 function renderSarif(reports: Report[]): object {
   const all = reports.flatMap(report => report.findings.map(finding => ({ report, finding })));
-  return {
-    version: '2.1.0',
-    $schema: 'https://json.schemastore.org/sarif-2.1.0.json',
-    runs: [{ tool: { driver: { name: 'Approval Doctor', version: '0.1.0',
-      rules: [...new Set(all.map(x => x.finding.id))].sort().map(id => ({ id })) } },
-      results: all.map(({ report, finding }) => ({
-        ruleId: finding.id, level: finding.level,
-        message: { text: `${finding.recordId}: ${finding.message}` },
-        locations: [{ physicalLocation: { artifactLocation: { uri: report.source } } }],
-      })) }],
-  };
+  return { version: '2.1.0', $schema: 'https://json.schemastore.org/sarif-2.1.0.json', runs: [{
+    tool: { driver: { name: 'Approval Doctor', version: '0.1.0', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
+    results: all.map(({ report, finding }) => ({ ruleId: finding.rule, level: finding.level === 'WARN' ? 'warning' : 'note',
+      message: { text: `${finding.recordId}: ${finding.observed} ${finding.reason} Missing: ${finding.missing}` },
+      locations: [{ physicalLocation: { artifactLocation: { uri: report.source } } }] }))
+  }] };
 }
-
+async function collect(path: string): Promise<string[]> {
+  const info = await lstat(path);
+  if (info.isSymbolicLink()) throw Error('Symlink inputs are not supported');
+  if (info.isFile()) return [path];
+  if (!info.isDirectory()) throw Error('Input must be a file or directory');
+  const found: string[] = [];
+  for (const dir of SUBDIRS) for (const name of CANDIDATES) {
+    const file = join(path, dir, name);
+    try { if ((await lstat(file)).isFile()) found.push(file); } catch { /* candidate absent */ }
+  }
+  return found;
+}
 export async function main(args: string[], output = process.stdout, errors = process.stderr): Promise<number> {
-  const usage = 'Usage: approval-doctor scan <config.json> [more.json ...] [--format text|json|sarif] [--fail-on warning|error]\n';
+  const usage = 'Usage: approval-doctor [scan] <project-dir|config.json> [more inputs...] [--format text|json|sarif] [--fail-on warning|error]\n';
   if (args.includes('--help') || args.includes('-h')) { output.write(usage); return 0; }
-  if (args.shift() !== 'scan') { errors.write(usage); return 2; }
+  const rest = args[0] === 'scan' ? args.slice(1) : args;
   let format = 'text', failOn = 'error';
+  const inputs: string[] = [];
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '--format') format = rest[++i] ?? '';
+    else if (rest[i] === '--fail-on') failOn = rest[++i] ?? '';
+    else if (rest[i].startsWith('-')) { errors.write(`Unknown option: ${rest[i]}\n`); return 2; }
+    else inputs.push(rest[i]);
+  }
+  if (!['text', 'json', 'sarif'].includes(format) || !['warning', 'error'].includes(failOn)) { errors.write(usage); return 2; }
+  if (!inputs.length) inputs.push('.');
   const files: string[] = [];
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--format') format = args[++i] ?? '';
-    else if (args[i] === '--fail-on') failOn = args[++i] ?? '';
-    else if (args[i].startsWith('-')) { errors.write(`Unknown option: ${args[i]}\n`); return 2; }
-    else files.push(args[i]);
+  for (const input of inputs) {
+    try { files.push(...await collect(input)); } catch { errors.write(`Unable to inspect input: ${input}\n`); return 2; }
   }
-  if (!files.length || !['text', 'json', 'sarif'].includes(format) || !['warning', 'error'].includes(failOn)) {
-    errors.write(usage); return 2;
-  }
-  const reports = await Promise.all(files.map(scanFile));
-  reports.sort((a, b) => a.source.localeCompare(b.source));
+  if (!files.length) { errors.write('No supported configuration files found. Pass an explicit JSON file or add mcp.json, tools.json, or openai-hosted-mcp.json.\n'); return 2; }
+  const reports = await Promise.all([...new Set(files)].sort().map(scanFile));
   output.write(format === 'text' ? renderText(reports) : JSON.stringify(format === 'sarif' ? renderSarif(reports) : reports, null, 2) + '\n');
-  return reports.some(r => r.errors.length) ? 2 :
-    failOn === 'warning' && reports.some(r => r.findings.some(f => f.level === 'warning')) ? 1 : 0;
+  return reports.some(r => r.errors.length) ? 2 : failOn === 'warning' && reports.some(r => r.findings.some(f => f.level === 'WARN')) ? 1 : 0;
 }

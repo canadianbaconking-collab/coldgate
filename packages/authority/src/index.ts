@@ -1,2 +1,3 @@
-export type * from './model.ts';
-export { inferEffect, scanConfig, scanFile, assess } from './scan.ts';
+export * from './model.ts';
+export * from './scan.ts';
+export * from './rules.ts';

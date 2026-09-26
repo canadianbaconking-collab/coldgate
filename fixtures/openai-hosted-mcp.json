@@ -1,0 +1,12 @@
+{
+  "hostedMcpTools": [{
+    "serverLabel": "issues",
+    "serverUrl": "https://example.invalid/mcp?token=EXAMPLE_SECRET_DO_NOT_EXPORT",
+    "requireApproval": {"always": {"toolNames": ["create_issue"]}, "never": {"toolNames": ["list_issues"]}},
+    "tools": [
+      {"name": "create_issue", "allowedHosts": ["api.example.invalid"]},
+      {"name": "list_issues", "annotations": {"readOnlyHint": true}},
+      {"name": "send_email"}
+    ]
+  }]
+}

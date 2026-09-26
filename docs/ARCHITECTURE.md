@@ -1,0 +1,9 @@
+# Authority Model and Approval Doctor v0.1
+
+`packages/authority/src/model.ts` defines principals, capabilities, effects, resource boundaries, approval states, and claims with status and provenance. `scan.ts` accepts three static JSON shapes and normalizes them. `rules.ts` turns records into deterministic findings. `packages/approval-doctor/src/cli.ts` discovers files and formats text, JSON, or SARIF. No network calls or process execution occur during scanning.
+
+A capability includes provider and operation; a multi-effect summary; zero or more declared resource boundaries; external destination; credential names and scopes; approval, delegation and persistence claims; and allowlisted MCP annotation booleans. Currently unknown destination/delegation/persistence are explicit UNKNOWN claims. Principal defaults to the MCP server in these inputs; downstream agents or user identities cannot be inferred from a server declaration. Inventory is a static snapshot or unknown.
+
+`Claim<T>` stores `value`, `status`, `source` and `explanation`. The aggregate effect summary can mix annotation declarations and name inferences; where it does, its overall status is INFERRED and per-effect evidence keeps their distinct origins. No status is promoted to OBSERVED or ENFORCED. An MCP annotation is only a declaration, and an inferred verb is only a hypothesis. JSON output excludes original config and secret values. Rule IDs CG001–CG009 remain stable within v0.1, but are not a public policy language.
+
+The decisive missing link for later AuthorityDiff is a **stable tool identity paired with comparable evidence**. A diff must compare changes in source, confidence, inventory completeness, and effective approval separately. A changed static catalog alone cannot prove newly acquired or removed runtime authority. Keep prior and current claims side by side instead of reducing them to one severity number.

@@ -1,0 +1,9 @@
+{
+  "serverName": "github",
+  "tools": [
+    {"name": "list_issues", "annotations": {"readOnlyHint": true, "openWorldHint": false}, "inputSchema": {"type": "object"}},
+    {"name": "push_files", "annotations": {"destructiveHint": true, "openWorldHint": true}, "repositories": ["*"]},
+    {"name": "delete_issue", "annotations": {"readOnlyHint": true, "destructiveHint": true}},
+    {"name": "mystery", "annotations": {"idempotentHint": false}}
+  ]
+}

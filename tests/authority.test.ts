@@ -1,53 +1,74 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import { scanConfig, scanFile } from '../packages/authority/src/index.ts';
-import { main } from '../packages/approval-doctor/src/cli.ts';
+import { scanConfig, scanFile, inferEffects } from '../packages/authority/src/index.ts';
+import { main, renderText } from '../packages/approval-doctor/src/cli.ts';
 
-const fixture = new URL('../fixtures/mcp-basic.json', import.meta.url);
+const fixture = (name: string) => new URL(`../fixtures/${name}`, import.meta.url).pathname;
+const capture = () => {
+  let text = '';
+  return { stream: { write: (s: string) => { text += s; return true; } } as typeof process.stdout, get: () => text };
+};
 
-test('keeps claims tied to their evidence and does not export credential values', async () => {
-  const report = await scanFile(fixture.pathname);
-  assert.equal(report.errors.length, 0);
-  const write = report.records.find(x => x.id.endsWith('.write_file'))!;
-  assert.equal(write.capability.effect.value, 'write');
-  assert.equal(write.capability.effect.status, 'INFERRED');
-  assert.equal(write.capability.authorization.approval.status, 'DECLARED');
-  assert.equal(write.capability.authorization.approval.value, 'required');
-  assert.notEqual(write.capability.authorization.approval.status, 'ENFORCED');
-  assert.equal(write.capability.boundary.paths.status, 'DECLARED');
-  assert.ok(report.findings.some(x => x.id === 'CG004' && x.recordId === write.id));
+test('MCP snapshot preserves hints as declarations and exposes contradictions', async () => {
+  const report = await scanFile(fixture('tools.json'));
+  assert.equal(report.format, 'mcp-tools-snapshot');
+  assert.equal(report.records.length, 4);
+  const push = report.records.find(r => r.id === 'github.push_files')!;
+  assert.ok(push.capability.effects.value.includes('DESTRUCTIVE'));
+  assert.equal(push.capability.effects.status, 'INFERRED');
+  assert.equal(push.capability.effectEvidence.find(x => x.value === 'DESTRUCTIVE')?.status, 'DECLARED');
+  assert.equal(push.capability.effectEvidence.find(x => x.value === 'EXTERNAL_COMMUNICATION')?.status, 'INFERRED');
+  assert.equal(push.capability.approval.value, 'UNSPECIFIED');
+  assert.equal(push.capability.boundaries[0].kind, 'repository_pattern');
+  assert.ok(report.findings.some(f => f.rule === 'CG003' && f.level === 'WARN' && f.recordId === push.id));
+  assert.ok(report.findings.some(f => f.rule === 'CG007' && f.recordId === 'github.delete_issue'));
+  assert.ok(report.findings.some(f => f.rule === 'CG002' && f.recordId === 'github.mystery'));
+  assert.match(renderText([report]), /Missing: Effective approval behavior/);
+});
+
+test('client config keeps unknown inventory, redacts secrets, and identifies inherited approval', async () => {
+  const report = await scanFile(fixture('mcp.json'));
+  const remote = report.records.find(r => r.id === 'remote.*')!;
+  assert.equal(remote.inventory.status, 'UNKNOWN');
+  assert.equal(remote.capability.effects.value[0], 'UNKNOWN');
+  assert.ok(report.findings.some(f => f.rule === 'CG001' && f.recordId === remote.id));
+  const write = report.records.find(r => r.id === 'filesystem.write_file')!;
+  assert.equal(write.capability.approval.value, 'REQUIRED');
+  assert.equal(write.capability.approval.status, 'DECLARED');
+  assert.ok(report.findings.some(f => f.rule === 'CG005' && f.recordId === write.id));
+  assert.ok(report.findings.some(f => f.rule === 'CG004' && f.recordId === 'filesystem.shell_exec'));
+  assert.ok(report.findings.some(f => f.rule === 'CG003' && f.recordId === 'filesystem.delete_file'));
+  assert.deepEqual(write.capability.credentialNames.value, ['GITHUB_TOKEN']);
   assert.ok(!JSON.stringify(report).includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
-  assert.deepEqual(write.capability.authorization.credentialNames.value, ['TOKEN']);
 });
 
-test('reports explicit disabled approval and undiscovered server tools', async () => {
-  const report = await scanFile(fixture.pathname);
-  assert.ok(report.findings.some(x => x.id === 'CG003' && x.recordId.endsWith('.delete_file')));
-  assert.ok(report.findings.some(x => x.id === 'CG001' && x.recordId === 'mcpServers.remote.*'));
-  assert.equal(report.records.find(x => x.id === 'mcpServers.remote.*')?.inventory.status, 'UNKNOWN');
+test('OpenAI hosted MCP JSON resolves explicit tool names, preserves conditional selectors', async () => {
+  const report = await scanFile(fixture('openai-hosted-mcp.json'));
+  const issue = report.records.find(r => r.id === 'issues.create_issue')!;
+  assert.equal(issue.capability.approval.value, 'REQUIRED');
+  const list = report.records.find(r => r.id === 'issues.list_issues')!;
+  assert.equal(list.capability.approval.value, 'NOT_REQUIRED');
+  const send = report.records.find(r => r.id === 'issues.send_email')!;
+  assert.equal(send.capability.approval.value, 'CONDITIONAL');
+  assert.ok(report.findings.some(f => f.rule === 'CG004' && f.recordId === send.id));
+  assert.ok(!JSON.stringify(report).includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
 });
 
-test('malformed config fails closed without echoing input', () => {
-  const report = scanConfig({ mcpServers: [] }, 'broken.json');
-  assert.deepEqual(report.errors, ['mcpServers must be an object']);
-  assert.equal(report.records.length, 0);
+test('malformed and unsupported input cannot echo data', async () => {
+  assert.deepEqual(scanConfig({ mcpServers: [] }, 'bad.json').errors, ['mcpServers must be an object']);
+  assert.equal(scanConfig({ foo: 'password=SECRET' }, 'bad.json').records.length, 0);
+  assert.deepEqual(inferEffects('unusual_name'), ['UNKNOWN']);
 });
 
-test('SARIF and warning gate produce stable machine output', async () => {
-  let out = '', err = '';
-  const writer = (append: (text: string) => void) => ({ write: (text: string) => { append(text); return true; } });
-  const exit = await main(['scan', fixture.pathname, '--format', 'sarif', '--fail-on', 'warning'],
-    writer(text => out += text) as typeof process.stdout, writer(text => err += text) as typeof process.stderr);
+test('directory discovery, JSON, SARIF and warning gate work from clean invocation', async () => {
+  const out = capture(), err = capture();
+  const exit = await main(['fixtures', '--format', 'json', '--fail-on', 'warning'], out.stream, err.stream);
   assert.equal(exit, 1);
-  assert.equal(err, '');
-  const sarif = JSON.parse(out);
-  assert.equal(sarif.version, '2.1.0');
-  assert.ok(sarif.runs[0].results.some((x: { ruleId: string }) => x.ruleId === 'CG003'));
-  assert.ok(!out.includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
-});
-
-test('fixture is ordinary JSON without execution', async () => {
-  const raw = await readFile(fixture, 'utf8');
-  assert.doesNotThrow(() => JSON.parse(raw));
+  assert.equal(err.get(), '');
+  const reports = JSON.parse(out.get());
+  assert.equal(reports.length, 3);
+  assert.ok(!out.get().includes('EXAMPLE_SECRET_DO_NOT_EXPORT'));
+  const sarif = capture();
+  assert.equal(await main(['fixtures/tools.json', '--format', 'sarif'], sarif.stream, capture().stream), 0);
+  assert.equal(JSON.parse(sarif.get()).version, '2.1.0');
 });

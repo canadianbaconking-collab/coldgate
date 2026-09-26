@@ -1,0 +1,42 @@
+Frosted Logic — Approval Doctor
+
+tools.json (mcp-tools-snapshot)
+  github.delete_issue | READ, WRITE, DESTRUCTIVE [DECLARED] | approval UNSPECIFIED [UNKNOWN]
+    scope: unknown:unknown [UNKNOWN]
+    evidence: effects=tools.delete_issue.annotations + tools.delete_issue.annotations + tools.delete_issue.annotations; approval=tools.delete_issue
+    WARN CG003: Approval is UNSPECIFIED (UNKNOWN).
+      Inference: Potential READ, WRITE, DESTRUCTIVE from declared evidence. Why: A consequential operation may run without a confirmed approval boundary.
+      Missing: Effective approval behavior and an explicit policy for this operation.
+    INFO CG006: MCP readOnlyHint=true.
+      Inference: Tool declares read-only behavior. Why: An MCP annotation is an untrusted descriptive hint.
+      Missing: Implementation or observed behavior to establish read-only operation.
+    REVIEW CG007: Read-only hint conflicts with destructive hint or name-derived write effect.
+      Inference: Effect metadata may be contradictory. Why: Do not discard either signal until verified.
+      Missing: Independent behavior evidence.
+    REVIEW CG008: No supported resource boundary was found.
+      Inference: Scope may be broad. Why: Tool reach cannot be determined from this static input.
+      Missing: Explicit allowed resources or independent enforcement evidence.
+  github.list_issues | READ [DECLARED] | approval UNSPECIFIED [UNKNOWN]
+    scope: unknown:unknown [UNKNOWN]
+    evidence: effects=tools.list_issues.annotations; approval=tools.list_issues
+    INFO CG006: MCP readOnlyHint=true.
+      Inference: Tool declares read-only behavior. Why: An MCP annotation is an untrusted descriptive hint.
+      Missing: Implementation or observed behavior to establish read-only operation.
+  github.mystery | UNKNOWN [UNKNOWN] | approval UNSPECIFIED [UNKNOWN]
+    scope: unknown:unknown [UNKNOWN]
+    evidence: effects=tools.mystery; approval=tools.mystery
+    UNKNOWN CG002: No supported effect hint.
+      Inference: None. Why: A name without a recognized verb cannot establish behavior.
+      Missing: Tool implementation or independent observation.
+  github.push_files | WRITE, DESTRUCTIVE, OPEN_WORLD, EXTERNAL_COMMUNICATION [INFERRED] | approval UNSPECIFIED [UNKNOWN]
+    scope: repository_pattern:* [DECLARED]
+    evidence: effects=tools.push_files.annotations + tools.push_files.annotations + tools.push_files.annotations + tools.push_files.name; approval=tools.push_files
+    WARN CG003: Approval is UNSPECIFIED (UNKNOWN).
+      Inference: Potential WRITE, DESTRUCTIVE, OPEN_WORLD, EXTERNAL_COMMUNICATION from inferred evidence. Why: A consequential operation may run without a confirmed approval boundary.
+      Missing: Effective approval behavior and an explicit policy for this operation.
+    REVIEW CG009: A declared resource boundary contains *.
+      Inference: Scope could include arbitrary resources. Why: Wildcard scope is wider than a named resource.
+      Missing: Effective scope and enforcement behavior.
+
+Summary: 4 entries; 0 unknown inventories; 0 explicit required approvals; 4 unspecified approvals; 2 warnings; 3 reviews.
+Static declarations and hints do not prove runtime enforcement.

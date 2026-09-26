@@ -1,145 +1,145 @@
-import { readFile } from 'node:fs/promises';
-import { basename, resolve } from 'node:path';
-import type { Approval, AuthorityRecord, Effect, Evidence, Finding, Report } from './model.ts';
+import { lstat, readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
+import type { Approval, AuthorityRecord, Boundary, Capability, Claim, Effect, Report } from './model.ts';
+import { assess } from './rules.ts';
 
-const unknown = <T>(value: T): Evidence<T> => ({ value, status: 'UNKNOWN', source: 'not present in static config' });
-const declared = <T>(value: T, source: string): Evidence<T> => ({ value, status: 'DECLARED', source });
-
-const object = (v: unknown): Record<string, unknown> | undefined =>
-  v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : undefined;
-const strings = (v: unknown): string[] | undefined =>
-  Array.isArray(v) && v.every(x => typeof x === 'string') ? [...v] : undefined;
-
-/** A name is a hint. It is never proof of what code behind a tool will do. */
-export function inferEffect(name: string): Effect {
-  const n = name.toLowerCase();
-  if (/(^|[._-])(delete|remove|destroy|drop|purge)([._-]|$)/.test(n)) return 'delete';
-  if (/(^|[._-])(exec|execute|shell|run|spawn|eval)([._-]|$)/.test(n)) return 'execute';
-  if (/(^|[._-])(send|post|publish|push|upload|deploy|create|update|write|edit|commit)([._-]|$)/.test(n)) return 'write';
-  if (/(^|[._-])(fetch|request|http|browse|navigate)([._-]|$)/.test(n)) return 'network';
-  if (/(^|[._-])(read|get|list|search|find|inspect|view)([._-]|$)/.test(n)) return 'read';
-  return 'unknown';
-}
-
-function pickStrings(obj: Record<string, unknown>, keys: string[], source: string): Evidence<string[]> {
-  for (const key of keys) {
-    const val = strings(obj[key]);
-    if (val) return declared(val.sort(), `${source}.${key}`);
-  }
-  return unknown([]);
-}
-
-function approval(obj: Record<string, unknown>, source: string): Evidence<Approval> {
-  if (typeof obj.requiresApproval === 'boolean')
-    return declared(obj.requiresApproval ? 'required' : 'disabled', `${source}.requiresApproval`);
-  if (obj.approval === 'required' || obj.approval === 'disabled')
-    return declared(obj.approval, `${source}.approval`);
-  return unknown('unknown');
-}
-
-function entries(v: unknown): Array<[string, Record<string, unknown>]> {
-  const o = object(v);
-  if (o) return Object.entries(o).sort(([a], [b]) => a.localeCompare(b)).map(([k, val]) => [k, object(val) ?? {}]);
-  if (Array.isArray(v)) return v.flatMap((val, index) => {
-    const tool = object(val);
-    return tool ? [[typeof tool.name === 'string' ? tool.name : `tool-${index}`, tool] as [string, Record<string, unknown>]] : [];
-  }).sort(([a], [b]) => a.localeCompare(b));
+const object = (v: unknown): Record<string, unknown> | undefined => v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : undefined;
+const string = (v: unknown): string | undefined => typeof v === 'string' ? v : undefined;
+const strings = (v: unknown): string[] | undefined => Array.isArray(v) && v.every(x => typeof x === 'string') ? v : undefined;
+const safe = (v: string): string => v.replace(/[\x00-\x1f\x7f]/g, ' ').replace(/(?:token|secret|password|api[_-]?key|authorization)\s*[:=]\s*\S+/gi, '[redacted]').slice(0, 120);
+const claim = <T>(value: T, status: Claim<T>['status'], source: string, explanation: string): Claim<T> => ({ value, status, source, explanation });
+const declared = <T>(v: T, source: string, explanation = 'Declared in static input'): Claim<T> => claim(v, 'DECLARED', source, explanation);
+const unknown = <T>(v: T, source: string): Claim<T> => claim(v, 'UNKNOWN', source, 'No supported static evidence');
+const entries = (v: unknown): [string, Record<string, unknown>][] => {
+  if (object(v)) return Object.entries(object(v)!).filter(([, x]) => !!object(x)).map(([k, x]) => [k, object(x)!]).sort(([a], [b]) => a.localeCompare(b));
+  if (Array.isArray(v)) return v.flatMap((x, i) => object(x) ? [[string(object(x)!.name) ?? `tool-${i}`, object(x)!] as [string, Record<string, unknown>]] : []).sort(([a], [b]) => a.localeCompare(b));
   return [];
+};
+
+/** Name tokens are weak hints. A read verb cannot establish a read-only guarantee. */
+export function inferEffects(name: string): Effect[] {
+  const words = name.toLowerCase().split(/[^a-z]+/);
+  const has = (...s: string[]) => s.some(w => words.includes(w));
+  const e: Effect[] = [];
+  if (has('read', 'get', 'list', 'search', 'find', 'inspect', 'view')) e.push('READ');
+  if (has('write', 'create', 'update', 'edit', 'commit', 'push', 'upload', 'deploy', 'post', 'send', 'publish')) e.push('WRITE');
+  if (has('delete', 'remove', 'destroy', 'drop', 'purge', 'overwrite', 'reset', 'force')) e.push('DESTRUCTIVE');
+  if (has('exec', 'execute', 'shell', 'run', 'spawn', 'eval', 'command')) e.push('EXECUTE');
+  if (has('send', 'publish', 'post', 'push', 'upload', 'deploy', 'email', 'message')) e.push('EXTERNAL_COMMUNICATION');
+  return e.length ? e : ['UNKNOWN'];
 }
 
-/** Parses configuration declarations only. No MCP server or tool is executed. */
-export function scanConfig(config: unknown, source: string): Report {
-  const report: Report = { schemaVersion: '0.1', source, records: [], findings: [], errors: [] };
-  const root = object(config);
-  if (!root) { report.errors.push('Root must be a JSON object'); return report; }
-  const containers: Array<[string, unknown]> = [];
-  if (root.mcpServers !== undefined) containers.push(['mcpServers', root.mcpServers]);
-  if (root.servers !== undefined) containers.push(['servers', root.servers]);
-  if (containers.length === 0) { report.errors.push('No mcpServers or servers object found'); return report; }
-
-  for (const [container, serverMap] of containers) {
-    if (!object(serverMap)) { report.errors.push(`${container} must be an object`); continue; }
-    for (const [serverName, server] of entries(serverMap)) {
-      const path = `${container}.${serverName}`;
-      const toolEntries = entries(server.tools);
-      const explicitInventory = server.tools !== undefined && (object(server.tools) !== undefined || Array.isArray(server.tools));
-      // A client config commonly lists servers, not their remotely advertised tools.
-      const candidates = toolEntries.length ? toolEntries : [['*', {}] as [string, Record<string, unknown>]];
-      for (const [toolName, tool] of candidates) {
-        const toolPath = `${path}.tools.${toolName}`;
-        const effect = toolName === '*' ? 'unknown' : inferEffect(toolName);
-        const paths = pickStrings(tool, ['allowedPaths', 'paths'], toolPath);
-        const serverPaths = pickStrings(server, ['allowedPaths', 'paths'], path);
-        const hosts = pickStrings(tool, ['allowedHosts', 'hosts'], toolPath);
-        const serverHosts = pickStrings(server, ['allowedHosts', 'hosts'], path);
-        const scope = pickStrings(tool, ['scopes'], toolPath);
-        const serverScope = pickStrings(server, ['scopes'], path);
-        const toolApproval = approval(tool, toolPath);
-        const serverApproval = approval(server, path);
-        const envNames = Object.keys(object(server.env) ?? {}).sort();
-        const id = `${container}.${serverName}.${toolName}`;
-        const record: AuthorityRecord = {
-          id,
-          principal: unknown('unknown'),
-          agent: declared(basename(source), source),
-          capability: {
-            provider: serverName,
-            operation: toolName,
-            effect: effect === 'unknown' ? unknown(effect) : { value: effect, status: 'INFERRED', source: `tool name: ${toolName}` },
-            boundary: {
-              paths: paths.status === 'DECLARED' ? paths : serverPaths,
-              hosts: hosts.status === 'DECLARED' ? hosts : serverHosts,
-              openWorld: unknown(true),
-            },
-            authorization: {
-              credentialNames: envNames.length ? declared(envNames, `${path}.env keys`) : unknown([]),
-              scopes: scope.status === 'DECLARED' ? scope : serverScope,
-              approval: toolApproval.status === 'DECLARED' ? toolApproval : serverApproval,
-              delegation: unknown('unknown'),
-            },
-          },
-          inventory: explicitInventory ? declared(toolEntries.length ? 'partial' : 'unknown', `${path}.tools`) : unknown('unknown'),
-        };
-        report.records.push(record);
-        report.findings.push(...assess(record));
-      }
-      if (!explicitInventory || !toolEntries.length) report.findings.push({
-        id: 'CG001', level: 'note', recordId: `${path}.*`,
-        message: 'Tool inventory is unknown from this static config; query the server separately to establish actual tools.',
-      });
+function annotations(tool: Record<string, unknown>): Capability['annotations'] {
+  const raw = object(tool.annotations) ?? {};
+  const result: Capability['annotations'] = {};
+  for (const key of ['readOnlyHint', 'destructiveHint', 'openWorldHint', 'idempotentHint'] as const)
+    if (typeof raw[key] === 'boolean') result[key] = raw[key];
+  return result;
+}
+function effectEvidence(tool: Record<string, unknown>, name: string, path: string): Claim<Effect>[] {
+  const nameEffects = inferEffects(name);
+  const h = annotations(tool);
+  const hinted: Effect[] = [];
+  if (h.readOnlyHint === true) hinted.push('READ');
+  if (h.readOnlyHint === false) hinted.push('WRITE');
+  if (h.destructiveHint === true) hinted.push('WRITE', 'DESTRUCTIVE');
+  if (h.openWorldHint === true) hinted.push('OPEN_WORLD');
+  const result = hinted.map(e => declared(e, `${path}.annotations`, 'Untrusted MCP descriptive hint'));
+  for (const e of nameEffects) if (!hinted.includes(e)) result.push(e === 'UNKNOWN' ? unknown(e, path) : claim(e, 'INFERRED', `${path}.name`, 'Hypothesis from operation name'));
+  return result;
+}
+function boundaries(tool: Record<string, unknown>, server: Record<string, unknown>, path: string, serverPath: string): Boundary[] {
+  const found: Boundary[] = [];
+  for (const [owner, locator] of [[server, serverPath], [tool, path]] as const) {
+    for (const [key, kind] of [['allowedPaths', 'directory'], ['allowedHosts', 'domain'], ['repositories', 'repository_pattern']] as const) {
+      const values = strings(owner[key]);
+      if (values) for (const v of values) found.push({ kind: v === '*' && kind === 'domain' ? 'arbitrary_network' : v === '*' && kind === 'directory' ? 'arbitrary_filesystem' : kind, value: safe(v), claim: declared(safe(v), `${locator}.${key}`) });
     }
   }
+  return found.length ? found : [{ kind: 'unknown', value: 'unknown', claim: unknown('unknown', path) }];
+}
+function clientApproval(tool: Record<string, unknown>, server: Record<string, unknown>, path: string, serverPath: string): Claim<Approval> {
+  // Nonstandard fields are a Coldgate overlay. MCP itself does not specify an approval field.
+  if (typeof tool.requiresApproval === 'boolean') return declared(tool.requiresApproval ? 'REQUIRED' : 'NOT_REQUIRED', `${path}.requiresApproval`, 'Coldgate overlay declaration, not MCP enforcement');
+  if (tool.approval === 'inherited' || tool.approval === 'conditional') return declared(tool.approval === 'inherited' ? 'INHERITED' : 'CONDITIONAL', `${path}.approval`, 'Coldgate overlay declaration');
+  if (typeof server.requiresApproval === 'boolean') return declared('INHERITED', `${serverPath}.requiresApproval`, `Server rule says ${server.requiresApproval ? 'required' : 'not required'}; applicability unverified`);
+  return unknown('UNSPECIFIED', path);
+}
+function hostedApproval(policy: unknown, toolName: string, path: string): Claim<Approval> {
+  if (policy === 'always' || policy === 'never') return declared(policy === 'always' ? 'REQUIRED' : 'NOT_REQUIRED', `${path}.requireApproval`, 'OpenAI hosted MCP policy declaration');
+  const p = object(policy);
+  if (p) {
+    const always = strings(object(p.always)?.toolNames);
+    const never = strings(object(p.never)?.toolNames);
+    if (always?.includes(toolName) && never?.includes(toolName)) return unknown('UNKNOWN', `${path}.requireApproval`);
+    if (always?.includes(toolName)) return declared('REQUIRED', `${path}.requireApproval.always.toolNames`);
+    if (never?.includes(toolName)) return declared('NOT_REQUIRED', `${path}.requireApproval.never.toolNames`);
+    return declared('CONDITIONAL', `${path}.requireApproval`, 'Selector or unmatched tool needs effective policy resolution');
+  }
+  return unknown('UNSPECIFIED', path);
+}
+function normalize(provider: string, name: string, tool: Record<string, unknown>, server: Record<string, unknown>, path: string, serverPath: string, knownInventory: boolean, ap?: Claim<Approval>): AuthorityRecord {
+  const envNames = Object.keys(object(server.env) ?? {}).map(safe).sort();
+  const scope = strings(tool.scopes);
+  const evidence = name === '*' ? [unknown<Effect>('UNKNOWN', path)] : effectEvidence(tool, name, path);
+  const aggregateStatus = evidence.some(e => e.status === 'UNKNOWN') ? 'UNKNOWN' : evidence.some(e => e.status === 'INFERRED') ? 'INFERRED' : 'DECLARED';
+  return {
+    id: `${safe(provider)}.${safe(name)}`,
+    principal: { kind: 'mcp_server', name: safe(provider), claim: declared(safe(provider), serverPath) },
+    capability: {
+      provider: safe(provider), operation: safe(name),
+      effects: claim(evidence.map(e => e.value), aggregateStatus, evidence.map(e => e.source).join(' + '), 'Aggregate status is no stronger than its weakest member; see effectEvidence'),
+      effectEvidence: evidence,
+      boundaries: boundaries(tool, server, path, serverPath), destination: unknown('unknown', path),
+      credentialNames: envNames.length ? declared(envNames, `${serverPath}.env keys`) : unknown([], serverPath),
+      scopes: scope ? declared(scope.map(safe), `${path}.scopes`) : unknown([], path),
+      approval: ap ?? clientApproval(tool, server, path, serverPath),
+      delegation: unknown('unknown', path), persistence: unknown('unknown', path), annotations: annotations(tool),
+    },
+    inventory: knownInventory ? declared('snapshot', path, 'Static snapshot may differ from live server') : unknown('unknown', path),
+  };
+}
+
+/** Parses static JSON only. No server, package, command, or URL is executed. */
+export function scanConfig(input: unknown, source = 'input.json'): Report {
+  const report: Report = { schemaVersion: '0.1', source: safe(basename(source)), format: 'unknown', records: [], findings: [], errors: [] };
+  const root = object(input);
+  if (!root) { report.errors.push('Root must be a JSON object'); return report; }
+  const add = (r: AuthorityRecord) => { report.records.push(r); report.findings.push(...assess(r)); };
+  if (Array.isArray(root.tools) && root.mcpServers === undefined && root.servers === undefined) {
+    report.format = 'mcp-tools-snapshot';
+    const provider = string(root.serverName) ?? 'snapshot';
+    for (const [name, tool] of entries(root.tools)) add(normalize(provider, name, tool, {}, `tools.${safe(name)}`, 'serverName', true));
+  } else if (Array.isArray(root.hostedMcpTools)) {
+    report.format = 'openai-hosted-mcp-json';
+    for (const [i, item] of root.hostedMcpTools.entries()) {
+      const server = object(item), label = string(server?.serverLabel);
+      if (!server || !label) { report.errors.push(`hostedMcpTools[${i}] requires serverLabel`); continue; }
+      const path = `hostedMcpTools[${i}]`, tools = entries(server.tools);
+      for (const [name, tool] of tools.length ? tools : [['*', {}] as [string, Record<string, unknown>]])
+        add(normalize(label, name, tool, server, `${path}.tools.${safe(name)}`, path, !!tools.length, name === '*' ? unknown('UNKNOWN', path) : hostedApproval(server.requireApproval, name, path)));
+    }
+  } else if (root.mcpServers !== undefined || root.servers !== undefined) {
+    report.format = 'mcp-client-json';
+    for (const key of ['mcpServers', 'servers'] as const) {
+      if (root[key] === undefined) continue;
+      if (!object(root[key])) { report.errors.push(`${key} must be an object`); continue; }
+      for (const [serverName, server] of entries(root[key])) {
+        const path = `${key}.${safe(serverName)}`, tools = entries(server.tools);
+        for (const [name, tool] of tools.length ? tools : [['*', {}] as [string, Record<string, unknown>]])
+          add(normalize(serverName, name, tool, server, `${path}.tools.${safe(name)}`, path, !!tools.length));
+      }
+    }
+  } else report.errors.push('Unsupported JSON: expected tools, hostedMcpTools, mcpServers, or servers');
   return report;
 }
-
-export function assess(record: AuthorityRecord): Finding[] {
-  const { effect, authorization, boundary } = record.capability;
-  const findings: Finding[] = [];
-  if (effect.value === 'unknown') findings.push({ id: 'CG002', level: 'note', recordId: record.id,
-    message: 'Effect is unknown; a tool name or server declaration does not establish actual behavior.' });
-  if (authorization.approval.value === 'disabled' && ['write', 'delete', 'execute'].includes(effect.value))
-    findings.push({ id: 'CG003', level: 'warning', recordId: record.id,
-      message: 'Config declares approval disabled for a potentially mutating tool.' });
-  else if (['write', 'delete', 'execute'].includes(effect.value))
-    findings.push({ id: 'CG004', level: 'warning', recordId: record.id,
-      message: authorization.approval.value === 'required'
-        ? 'Approval is declared, but static config cannot establish enforcement.'
-        : 'Approval requirement is unknown for a potentially mutating tool.' });
-  if (['write', 'delete', 'execute', 'network'].includes(effect.value) &&
-      boundary.paths.status === 'UNKNOWN' && boundary.hosts.status === 'UNKNOWN')
-    findings.push({ id: 'CG005', level: 'note', recordId: record.id,
-      message: 'Resource scope is not established by the parsed config.' });
-  return findings;
-}
-
 export async function scanFile(file: string): Promise<Report> {
-  const source = resolve(file);
+  const source = safe(basename(file));
+  const failure = (message: string): Report => ({ schemaVersion: '0.1', source, format: 'unknown', records: [], findings: [], errors: [message] });
   try {
-    const raw = await readFile(source, 'utf8');
-    return scanConfig(JSON.parse(raw), source);
-  } catch (error) {
-    // Avoid including raw config or error messages that may echo secret values.
-    const message = error instanceof SyntaxError ? 'Invalid JSON' : 'Unable to read file';
-    return { schemaVersion: '0.1', source, records: [], findings: [], errors: [message] };
-  }
+    const info = await lstat(file);
+    if (!info.isFile() || info.isSymbolicLink()) return failure('Input must be a regular file, not a symlink');
+    if (info.size > 2_000_000) return failure('Input exceeds 2 MB limit');
+    return scanConfig(JSON.parse(await readFile(file, 'utf8')), source);
+  } catch (err) { return failure(err instanceof SyntaxError ? 'Invalid JSON' : 'Unable to read file'); }
 }

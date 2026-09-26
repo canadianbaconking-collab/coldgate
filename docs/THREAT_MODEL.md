@@ -1,21 +1,17 @@
-# Threat model, v0.1
-
-## Intended use
-
-A developer runs Approval Doctor against a local MCP client JSON config to see declared or inferred capabilities, approval claims, and missing evidence before granting an agent tool access.
+# Threat model and limits
 
 ## Trust boundaries
 
-- The config is untrusted input. Parsing reads JSON only and never executes commands, contacts a URL, expands environment variables, or loads a server.
-- Tool names can mislead. Their effects are `INFERRED`; an apparently read-only tool may mutate data.
-- `requiresApproval: true` is `DECLARED`, not `ENFORCED`. Client configuration does not verify middleware, user interaction, or policy behavior.
-- Scope arrays are declarations. Paths can contain sensitive names; users should inspect reports before sharing them. Environment variable **values** and command arguments are excluded from output. Credential names may also reveal integrations.
-- A missing tools list means actual capabilities are unknown. Even a listed tool inventory is only partial evidence because a live server can differ.
+The target project is untrusted input. Approval Doctor reads only selected local JSON files, limits each file to 2 MB, rejects explicit symlink inputs, and does not load JS, import a package, start an MCP server, contact a URL, resolve environment variables, or invoke a tool. JSON parsing cannot execute a configuration command. Directory discovery checks a fixed list of paths.
 
-## Out of scope
+Reports omit raw configuration, command arguments, remote URLs, environment values, and input schemas. Credential **identifiers**, tool names, and declared resource paths can still expose information; inspect reports before sharing them. Input filenames appear in SARIF but full source paths do not. JSON is not a substitute for an output data classification policy.
 
-This milestone does not validate MCP protocol handshakes, server binaries, delegated credentials, sandbox boundaries, approval bypasses, network egress, or runtime traces. It does not enforce permissions. Reports are review aids, not safety guarantees. Avoid running it on files whose paths themselves are confidential if sharing a report; SARIF includes the input path.
+## What static evidence cannot establish
 
-## Validation direction
+- Whether the server's live `tools/list` matches a saved snapshot, or whether a client exposes all of them to an agent.
+- Whether any tool implementation is read-only, destructive, idempotent, bounded, or honest about its annotation hints.
+- Whether declared allowed paths, domains, repository patterns, or SDK approval settings are actually enforced at the call site.
+- Whether `onApproval` decides automatically, whether a human sees a request, or whether an inherited/conditional rule matches a specific call.
+- Effective credential privileges, subagent delegation, parameter-sensitive effects, shell sandboxing, data exfiltration paths, and persistent tasks.
 
-Next steps require independently verified live inventory, observed effects, and enforcement checks with distinct evidence sources. Preserve provenance instead of upgrading inferred claims to enforced ones by assumption.
+A warning means the evidence warrants inspection; its absence does not establish safety. Name heuristics may miss a side effect or create a false alarm. Unsupported configuration should be reported as unsupported rather than silently guessed. Future validation needs live inventory and independent enforcement evidence without promoting declarations automatically.

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx", "args": ["-y", "server-filesystem", "/home/example/projects"],
+      "env": {"GITHUB_TOKEN": "EXAMPLE_SECRET_DO_NOT_EXPORT"},
+      "tools": [
+        {"name": "read_file", "annotations": {"readOnlyHint": true}, "allowedPaths": ["/home/example/projects"]},
+        {"name": "write_file", "requiresApproval": true, "allowedPaths": ["/home/example/projects"]},
+        {"name": "delete_file", "requiresApproval": false},
+        {"name": "shell_exec", "approval": "inherited", "allowedPaths": ["*"]}
+      ]
+    },
+    "remote": {"url": "https://example.invalid/mcp?token=EXAMPLE_SECRET_DO_NOT_EXPORT"}
+  }
+}
