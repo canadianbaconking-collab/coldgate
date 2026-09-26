@@ -2,6 +2,7 @@ import { lstat, readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import type { Approval, AuthorityRecord, Boundary, Capability, Claim, Effect, Report } from './model.ts';
 import { assess } from './rules.ts';
+import { validateInput } from './validate.ts';
 
 const object = (v: unknown): Record<string, unknown> | undefined => v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : undefined;
 const string = (v: unknown): string | undefined => typeof v === 'string' ? v : undefined;
@@ -47,8 +48,8 @@ function effectEvidence(tool: Record<string, unknown>, name: string, path: strin
   if (h.readOnlyHint === false) hinted.push('WRITE');
   if (h.destructiveHint === true) hinted.push('WRITE', 'DESTRUCTIVE');
   if (h.openWorldHint === true) hinted.push('OPEN_WORLD');
-  const result = hinted.map(e => declared(e, `${path}.annotations`, 'Untrusted MCP descriptive hint'));
-  for (const e of nameEffects) if (!hinted.includes(e)) result.push(e === 'UNKNOWN' ? unknown(e, path) : claim(e, 'INFERRED', `${path}.name`, 'Hypothesis from operation name'));
+  const result = [...new Set(hinted)].map(e => declared(e, `${path}.annotations`, 'Untrusted MCP descriptive hint'));
+  for (const e of nameEffects) if (!hinted.includes(e) && !(e === 'UNKNOWN' && hinted.length)) result.push(e === 'UNKNOWN' ? unknown(e, path) : claim(e, 'INFERRED', `${path}.name`, 'Hypothesis from operation name'));
   return result;
 }
 function boundaries(tool: Record<string, unknown>, server: Record<string, unknown>, path: string, serverPath: string): Boundary[] {
@@ -72,6 +73,8 @@ function hostedApproval(policy: unknown, toolName: string, path: string, key = '
   if (policy === 'always' || policy === 'never') return declared(policy === 'always' ? 'REQUIRED' : 'NOT_REQUIRED', `${path}.${key}`, 'OpenAI MCP policy declaration');
   const p = object(policy);
   if (p) {
+    if ([p.always, p.never].some(v => object(v) && Object.keys(object(v)!).some(k => !['toolNames', 'tool_names'].includes(k))))
+      return declared('CONDITIONAL', `${path}.${key}`, 'Annotation-dependent selector cannot be resolved from a tool name');
     const always = strings(object(p.always)?.toolNames) ?? strings(object(p.always)?.tool_names);
     const never = strings(object(p.never)?.toolNames) ?? strings(object(p.never)?.tool_names);
     if (always?.includes(toolName) && never?.includes(toolName)) return unknown('UNKNOWN', `${path}.${key}`);
@@ -106,9 +109,15 @@ function normalize(provider: string, name: string, tool: Record<string, unknown>
 /** Parses static JSON only. No server, package, command, or URL is executed. */
 export function scanConfig(input: unknown, source = 'input.json'): Report {
   const report: Report = { schemaVersion: '0.1', source: safe(basename(source)), format: 'unknown', records: [], findings: [], errors: [] };
+  report.errors = validateInput(input);
+  if (report.errors.length) return report;
   const root = object(input);
   if (!root) { report.errors.push('Root must be a JSON object'); return report; }
-  const add = (r: AuthorityRecord) => { report.records.push(r); report.findings.push(...assess(r)); };
+  const seen = new Set<string>();
+  const add = (r: AuthorityRecord) => {
+    if (seen.has(r.id)) { report.errors.push('Duplicate normalized identity; use distinct provider and tool names'); return; }
+    seen.add(r.id); report.records.push(r); report.findings.push(...assess(r));
+  };
   if (Array.isArray(root.tools) && root.mcpServers === undefined && root.servers === undefined) {
     if (root.tools.some(x => object(x)?.type === 'mcp')) {
       report.format = 'openai-responses-mcp-json';
@@ -119,9 +128,10 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
         if (!label) { report.errors.push(`tools[${i}] MCP entry requires server_label`); continue; }
         const path = `tools[${i}]`;
         const names = strings(server.allowed_tools) ?? strings(object(server.allowed_tools)?.tool_names) ?? [];
+        if (Array.isArray(server.allowed_tools) && !server.allowed_tools.length) continue;
         for (const name of names.length ? names : ['*'])
           add(normalize(label, name, {}, {}, `${path}.allowed_tools.${safe(name)}`, path, false,
-            name === '*' ? unknown('UNKNOWN', path) : hostedApproval(server.require_approval, name, path, 'require_approval')));
+            hostedApproval(server.require_approval, name, path, 'require_approval')));
       }
     } else {
       report.format = 'mcp-tools-snapshot';
@@ -135,7 +145,7 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
       if (!server || !label) { report.errors.push(`hostedMcpTools[${i}] requires serverLabel`); continue; }
       const path = `hostedMcpTools[${i}]`, tools = entries(server.tools);
       for (const [name, tool] of tools.length ? tools : [['*', {}] as [string, Record<string, unknown>]])
-        add(normalize(label, name, tool, server, `${path}.tools.${safe(name)}`, path, !!tools.length, name === '*' ? unknown('UNKNOWN', path) : hostedApproval(server.requireApproval, name, path)));
+        add(normalize(label, name, tool, server, `${path}.tools.${safe(name)}`, path, !!tools.length, hostedApproval(server.requireApproval, name, path)));
     }
   } else if (root.mcpServers !== undefined || root.servers !== undefined) {
     report.format = 'mcp-client-json';
@@ -149,6 +159,7 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
       }
     }
   } else report.errors.push('Unsupported JSON: expected tools, hostedMcpTools, mcpServers, or servers');
+  if (report.errors.length) { report.records = []; report.findings = []; }
   return report;
 }
 export async function scanFile(file: string): Promise<Report> {

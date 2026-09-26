@@ -7,3 +7,9 @@ A capability includes provider and operation; a multi-effect summary; zero or mo
 `Claim<T>` stores `value`, `status`, `source` and `explanation`. The aggregate effect summary can mix annotation declarations and name inferences; where it does, its overall status is INFERRED and per-effect evidence keeps their distinct origins. No status is promoted to OBSERVED or ENFORCED. An MCP annotation is only a declaration, and an inferred verb is only a hypothesis. JSON output excludes original config and secret values. Rule IDs CG001–CG009 remain stable within v0.1, but are not a public policy language.
 
 The decisive missing link for later AuthorityDiff is a **stable tool identity paired with comparable evidence**. A diff must compare changes in source, confidence, inventory completeness, and effective approval separately. A changed static catalog alone cannot prove newly acquired or removed runtime authority. Keep prior and current claims side by side instead of reducing them to one severity number.
+
+## Validation boundary (0.1.1)
+
+`validate.ts` checks the recognized container, names, annotation booleans, scope arrays, overlay controls, and approval-selector shapes before normalization. Invalid documents produce diagnostics without partial records. Diagnostic messages use fixed field names and indices rather than input values. Normalized identity collisions are detected before the report is returned. The validator deliberately rejects unsupported/mixed tool formats instead of ignoring their entries.
+
+SARIF records analysis failures in `runs[].invocations[]`, independently of security findings. A successful invocation says only that the supported input was analyzed. Schema version remains 0.1; package version is 0.1.1.

@@ -2,7 +2,7 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.1 contains `@frostedlogic/authority`, a reusable TypeScript authority record, and `approval-doctor`, a local static analysis CLI. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.1.1 contains `@frostedlogic/authority`, a reusable TypeScript authority record, and `approval-doctor`, a local static analysis CLI. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
@@ -65,3 +65,18 @@ npm exec -- approval-doctor fixtures --fail-on warning
 ```
 
 There are no runtime dependencies. The fixture corpus is synthetic. This initial milestone does not include AuthorityDiff, runtime enforcement, prompt-injection detection, vulnerability scanning, or a hosted service.
+
+## Checkpoint 0.1.1 — input validation and failure reporting
+
+Malformed supported input now fails the entire document with exit code 2; valid-looking rows in a malformed document are not presented as a complete analysis. SARIF includes failed execution status and error notifications. Duplicate tool names, ambiguous root containers, and normalized identity collisions are rejected. Unknown fields outside the recognized analysis fields are still ignored; this is a structural validator for the supported subset, not a complete MCP schema validator.
+
+Limits: 2 MB per file, 100 servers per server container, 1,000 tools per catalog, and 50 validation diagnostics per document. Each document must contain exactly one root container. Native Responses inputs must contain only MCP tool entries; mixed function/built-in tool requests are explicitly unsupported. Annotation-dependent approval selectors remain CONDITIONAL. An explicit empty `allowed_tools: []` produces no candidate operations; it does not establish whole-agent safety.
+
+The suite contains 26 tests, including adversarial input cases and the golden report. Run the rejected-input example explicitly (it is outside normal directory discovery):
+
+```powershell
+npm exec -- approval-doctor fixtures/adversarial/malformed-tools.json --format sarif
+# Expected exit code: 2
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for checkpoint history.

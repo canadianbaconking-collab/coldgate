@@ -15,3 +15,7 @@ Reports omit raw configuration, command arguments, remote URLs, environment valu
 - Effective credential privileges, subagent delegation, parameter-sensitive effects, shell sandboxing, data exfiltration paths, and persistent tasks.
 
 A warning means the evidence warrants inspection; its absence does not establish safety. Name heuristics may miss a side effect or create a false alarm. Unsupported configuration should be reported as unsupported rather than silently guessed. Future validation needs live inventory and independent enforcement evidence without promoting declarations automatically.
+
+## Input validation limits
+
+Structural validation is limited to fields used by the analyzer. It does not validate full JSON Schema semantics or all MCP protocol requirements. Unknown extension properties are ignored. Malformed recognized fields fail the document, and SARIF exposes the failure. Limits on input size and container counts reduce accidental resource exhaustion; they are not an operating-system resource sandbox. Duplicate literal JSON object keys are handled by JSON.parse (last value wins) and are not detected in this version.
