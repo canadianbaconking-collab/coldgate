@@ -4,7 +4,7 @@ import { mkdtemp, writeFile, rm, readFile, symlink, mkdir } from 'node:fs/promis
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { scanProject } from '../packages/authority/src/project.ts';
-import { main, renderText } from '../packages/approval-doctor/src/cli.ts';
+import { main, renderText } from '../packages/cli/src/cli.ts';
 
 async function project(run: (dir: string, config: any, catalog: any, manifest: any) => Promise<void>) {
   const dir = await mkdtemp(join(tmpdir(), 'coldgate-project-'));
@@ -14,8 +14,8 @@ async function project(run: (dir: string, config: any, catalog: any, manifest: a
   try { await run(dir, config, catalog, manifest); } finally { await rm(dir, { recursive: true, force: true }); }
 }
 async function save(dir: string, config: unknown, catalog: unknown, manifest: unknown) {
-  for (const [name, value] of [['responses.json', config], ['tools.json', catalog], ['approval-doctor.project.json', manifest]] as const) await writeFile(join(dir, name), JSON.stringify(value));
-  return scanProject(join(dir, 'approval-doctor.project.json'));
+  for (const [name, value] of [['responses.json', config], ['tools.json', catalog], ['coldgate.project.json', manifest]] as const) await writeFile(join(dir, name), JSON.stringify(value));
+  return scanProject(join(dir, 'coldgate.project.json'));
 }
 
 test('native policy overrides catalog approval and retains distinct evidence sources', async () => {
@@ -102,8 +102,8 @@ test('connection rejects symlink inventory references', async () => {
     await writeFile(join(dir, 'target', 'tools.json'), JSON.stringify(catalog));
     await symlink(join(dir, 'target'), join(dir, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
     manifest.inventories[0].file = 'linked/tools.json';
-    await writeFile(join(dir, 'approval-doctor.project.json'), JSON.stringify(manifest));
-    assert.ok((await scanProject(join(dir, 'approval-doctor.project.json'))).errors.length);
+    await writeFile(join(dir, 'coldgate.project.json'), JSON.stringify(manifest));
+    assert.ok((await scanProject(join(dir, 'coldgate.project.json'))).errors.length);
   });
 });
 
@@ -116,6 +116,6 @@ test('example CLI uses project manifest once and agrees with golden output', asy
   assert.equal(reports.length, 1);
   assert.equal(reports[0].connections.length, 2);
   assert.equal(reports[0].records.length, 4);
-  const report = await scanProject('examples/connected/approval-doctor.project.json');
+  const report = await scanProject('examples/connected/coldgate.project.json');
   assert.equal(renderText([report]), await readFile('examples/connected/report.txt', 'utf8'));
 });

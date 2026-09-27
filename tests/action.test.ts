@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 test('Action runner writes a summary and preserves change/no-change/error exit codes', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'coldgate-action-'));
   try {
-    const run = (after: string, summary: string) => spawnSync(process.execPath, ['.github/actions/authority-diff/run.mjs'], { encoding: 'utf8', env: { ...process.env, GITHUB_WORKSPACE: resolve('.'), GITHUB_STEP_SUMMARY: summary, AUTHORITY_DIFF_BEFORE: 'examples/diff/before.json', AUTHORITY_DIFF_AFTER: after, AUTHORITY_DIFF_FAIL_ON: 'change' } });
+    const run = (after: string, summary: string) => spawnSync(process.execPath, ['.github/actions/coldgate-diff/run.mjs'], { encoding: 'utf8', env: { ...process.env, GITHUB_WORKSPACE: resolve('.'), GITHUB_STEP_SUMMARY: summary, COLDGATE_DIFF_BEFORE: 'examples/diff/before.json', COLDGATE_DIFF_AFTER: after, COLDGATE_DIFF_FAIL_ON: 'change' } });
     const changed = run('examples/diff/after.json', join(dir, 'changed.md'));
     assert.equal(changed.status, 1, changed.stderr);
     assert.match(await readFile(join(dir, 'changed.md'), 'utf8'), /APPROVAL/);

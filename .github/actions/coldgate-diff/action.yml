@@ -1,4 +1,4 @@
-name: Coldgate AuthorityDiff
+name: Coldgate Diff
 description: Compare two saved authority snapshots and write a review summary
 inputs:
   before:
@@ -18,6 +18,6 @@ runs:
       run: node "$GITHUB_ACTION_PATH/run.mjs"
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}
-        AUTHORITY_DIFF_BEFORE: ${{ inputs.before }}
-        AUTHORITY_DIFF_AFTER: ${{ inputs.after }}
-        AUTHORITY_DIFF_FAIL_ON: ${{ inputs.fail-on }}
+        COLDGATE_DIFF_BEFORE: ${{ inputs.before }}
+        COLDGATE_DIFF_AFTER: ${{ inputs.after }}
+        COLDGATE_DIFF_FAIL_ON: ${{ inputs.fail-on }}

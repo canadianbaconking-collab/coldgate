@@ -29,7 +29,7 @@ The [official OpenAI MCP guide](https://developers.openai.com/api/docs/guides/to
 
 Save the full `tools/list` result as JSON using your existing trusted MCP client. Coldgate does not run servers or perform discovery. It accepts either `{ "tools": [...] }` or a JSON-RPC response whose `result` has that shape. Combine all pages first; a remaining `nextCursor` is rejected. Optional `serverName` must match the binding if supplied.
 
-Create `approval-doctor.project.json`:
+Create `coldgate.project.json`:
 
 ```json
 {
@@ -45,12 +45,12 @@ Every configured server needs exactly one binding, with no extra bindings. Paths
 
 ```powershell
 cd C:\dev\playground\coldgate
-npm exec -- approval-doctor examples/connected
-npm exec -- approval-doctor examples/connected --format json
-npm exec -- approval-doctor examples/connected --format sarif --fail-on warning
+npm exec -- coldgate scan examples/connected
+npm exec -- coldgate scan examples/connected --format json
+npm exec -- coldgate scan examples/connected --format sarif --fail-on warning
 ```
 
-For your project, pass its directory or the exact `approval-doctor.project.json` path. Directory mode prefers that manifest over standalone files. `scanProject(path)` exposes the same behavior to TypeScript callers.
+For your project, pass its directory or the exact `coldgate.project.json` path. Directory mode prefers that manifest over standalone files. `scanProject(path)` exposes the same behavior to TypeScript callers.
 
 ## Reading the result
 

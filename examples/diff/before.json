@@ -21,7 +21,7 @@
           "operation": "create_issue",
           "parameters": {
             "value": {
-              "fingerprint": "20271bffc7990e2e99d4939336fe14a34c8c1ff9673fec15d548d2ead5eb94be",
+              "fingerprint": "4f4fc68b8c9b1cbf366722566b64e672ad84793f499ab5c16fd333592ba9ea80",
               "finiteProperties": [
                 "repo"
               ]
@@ -49,9 +49,9 @@
           "boundaries": [
             {
               "kind": "repository_pattern",
-              "value": "frostedlogic/coldgate",
+              "value": "canadianbaconking-collab/coldgate",
               "claim": {
-                "value": "frostedlogic/coldgate",
+                "value": "canadianbaconking-collab/coldgate",
                 "status": "DECLARED",
                 "source": "mcpServers.repository.tools.create_issue.repositories",
                 "explanation": "Declared in static input"

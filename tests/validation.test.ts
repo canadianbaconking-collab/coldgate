@@ -4,7 +4,7 @@ import { mkdtemp, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { scanConfig } from '../packages/authority/src/index.ts';
-import { main } from '../packages/approval-doctor/src/cli.ts';
+import { main } from '../packages/cli/src/cli.ts';
 
 const invalid = [
   ['null tool', { tools: [null] }],

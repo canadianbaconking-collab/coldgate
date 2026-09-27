@@ -2,7 +2,7 @@
 
 ## Trust boundaries
 
-The target project is untrusted input. Approval Doctor reads only selected local JSON files, limits each file to 2 MB, rejects explicit symlink inputs, and does not load JS, import a package, start an MCP server, contact a URL, resolve environment variables, or invoke a tool. JSON parsing cannot execute a configuration command. Directory discovery checks a fixed list of paths.
+The target project is untrusted input. Coldgate Scan reads only selected local JSON files, limits each file to 2 MB, rejects explicit symlink inputs, and does not load JS, import a package, start an MCP server, contact a URL, resolve environment variables, or invoke a tool. JSON parsing cannot execute a configuration command. Directory discovery checks a fixed list of paths.
 
 Reports omit raw configuration, command arguments, remote URLs, environment values, and input schemas. Credential **identifiers**, tool names, and declared resource paths can still expose information; inspect reports before sharing them. Input filenames appear in SARIF but full source paths do not. JSON is not a substitute for an output data classification policy.
 
@@ -28,7 +28,7 @@ The connection manifest is a user-supplied association, not proof of server iden
 
 ## Snapshot comparison
 
-AuthorityDiff consumes untrusted JSON reports under 8 MB each. It checks required claims, supported schema versions, duplicate identities, and failed-analysis markers before comparing. Error messages never echo the report's raw error strings. Displayed identifiers and scope strings are sanitized; Markdown escapes HTML and mentions. Snapshot authors can forge any claim, including OBSERVED or ENFORCED. The differ reports those assertions without validating their truth.
+Coldgate Diff consumes untrusted JSON reports under 8 MB each. It checks required claims, supported schema versions, duplicate identities, and failed-analysis markers before comparing. Error messages never echo the report's raw error strings. Displayed identifiers and scope strings are sanitized; Markdown escapes HTML and mentions. Snapshot authors can forge any claim, including OBSERVED or ENFORCED. The differ reports those assertions without validating their truth.
 
 Parameter schema values are not emitted. Their fingerprint is not encryption: someone who knows all but a small secret can test guesses against a hash. Do not embed real secrets in schemas or commit sensitive reports. Source paths, property names, credential identifiers and resource names can still be sensitive.
 

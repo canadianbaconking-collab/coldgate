@@ -14,7 +14,7 @@ export function validateSnapshots(input: unknown): { reports: Report[]; errors: 
   const reports = Array.isArray(input) ? input : [input];
   const errors: string[] = [];
   const seen = new Set<string>();
-  if (!reports.length || reports.length > 100) return { reports: [], errors: ['Expected 1–100 Approval Doctor reports'] };
+  if (!reports.length || reports.length > 100) return { reports: [], errors: ['Expected 1–100 Coldgate Scan reports'] };
   for (const [i, r] of reports.entries()) {
     const fail = () => errors.push(`Report ${i} is malformed, incomplete, or contains analysis errors`);
     if (!obj(r) || r.schemaVersion !== '0.1' || !str(r.source) || !str(r.format) || !Array.isArray(r.findings) || !Array.isArray(r.errors) || r.errors.length || !Array.isArray(r.records) || r.records.length > 10000) { fail(); continue; }

@@ -1,5 +1,5 @@
 {
-  "name": "approval-doctor",
+  "name": "@coldgate/cli",
   "version": "0.3.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,6 @@
     "node": ">=22.18.0"
   },
   "bin": {
-    "approval-doctor": "./bin/approval-doctor.js"
+    "coldgate": "./bin/coldgate.js"
   }
 }

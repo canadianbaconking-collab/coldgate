@@ -1,6 +1,6 @@
-Frosted Logic — Approval Doctor
+Coldgate — Scan
 
-approval-doctor.project.json (connected-openai-responses-mcp)
+coldgate.project.json (connected-openai-responses-mcp)
   Connected repository: responses.json + catalogs/repository.tools.json
     inventory: 4 listed; 3 selected; 1 excluded; 0 configured names missing
     catalog sha256: 9e6a8d94aacb9ee2ca9b41729bb5e57bea729f847cab285760e34aaca4b58370

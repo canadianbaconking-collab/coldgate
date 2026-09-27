@@ -1,4 +1,4 @@
-## Coldgate — AuthorityDiff
+## Coldgate — Diff
 
 - EFFECTS\_CHANGED repository\.create\_issue
   Before: \["WRITE"\]
@@ -11,7 +11,7 @@
   The explicit requirement changed; review whether consequential calls still need approval\.
 
 - BOUNDARIES\_CHANGED repository\.create\_issue
-  Before: \["repository\_pattern:frostedlogic/coldgate"\]
+  Before: \["repository\_pattern:canadianbaconking\-collab/coldgate"\]
   After: \["repository\_pattern:\*"\]
   A new wildcard boundary is declared; potential scope expansion needs review\.
 
@@ -21,7 +21,7 @@
   Credential identifiers changed; values and effective privileges are not compared\.
 
 - PARAMETERS\_CHANGED repository\.create\_issue
-  Before: 20271bffc7990e2e99d4939336fe14a34c8c1ff9673fec15d548d2ead5eb94be
+  Before: 4f4fc68b8c9b1cbf366722566b64e672ad84793f499ab5c16fd333592ba9ea80
   After: e0746f19d152448f58cb39f252f8edf26ca0aa3a60da752774a4ebd58f8d6a8b
   A top\-level enum/const restriction is no longer represented\. Review possible parameter widening; other constraints may still apply\.
 
@@ -36,7 +36,7 @@
   Per\-effect evidence changed; the aggregate effect set alone may hide this difference\.
 
 - BOUNDARY\_EVIDENCE\_CHANGED repository\.create\_issue
-  Before: \["repository\_pattern:frostedlogic/coldgate:DECLARED:mcpServers\.repository\.tools\.create\_issue\.repositories"\]
+  Before: \["repository\_pattern:canadianbaconking\-collab/coldgate:DECLARED:mcpServers\.repository\.tools\.create\_issue\.repositories"\]
   After: \["repository\_pattern:\*:DECLARED:mcpServers\.repository\.tools\.create\_issue\.repositories"\]
   Boundary evidence changed independently of whether the boundary is enforced\.
 

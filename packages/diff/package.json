@@ -1,5 +1,5 @@
 {
-  "name": "@coldgate/authority",
+  "name": "@coldgate/diff",
   "version": "0.3.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,6 @@
     "node": ">=22.18.0"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/diff.ts"
   }
 }

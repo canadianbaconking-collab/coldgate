@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { scanConfig } from '../packages/authority/src/scan.ts';
-import { diffSnapshots } from '../packages/authority-diff/src/diff.ts';
-import { main, renderDiff, renderSarif } from '../packages/authority-diff/src/cli.ts';
+import { diffSnapshots } from '../packages/diff/src/diff.ts';
+import { main, renderDiff, renderSarif } from '../packages/diff/src/cli.ts';
 
 function sample() {
   return scanConfig({ mcpServers: { repo: { tools: [{ name: 'create_issue', requiresApproval: true, repositories: ['owner/repo'], inputSchema: { type: 'object', properties: { repo: { const: 'owner/repo' } } } }] } } });

@@ -1,8 +1,14 @@
 # Changelog
 
-## 0.3.0 — AuthorityDiff MVP
+## Unreleased — Coldgate naming
 
-- Add a reusable snapshot differ and `authority-diff` CLI with text, JSON, Markdown, and SARIF output.
+- Consolidate commands as `coldgate scan` and `coldgate diff`; use `@coldgate/authority`, `@coldgate/cli`, and `@coldgate/diff` workspace packages.
+- Rename the connection manifest to `coldgate.project.json` and the Action to `.github/actions/coldgate-diff`. Update existing integrations to these names.
+- Align internal paths, report headers, SARIF tool names, documentation, and examples with Coldgate. Snapshot schema and rule IDs are unchanged.
+
+## 0.3.0 — Coldgate Diff MVP
+
+- Add a reusable snapshot differ and `coldgate diff` CLI with text, JSON, Markdown, and SARIF output.
 - Compare tools, effects, external communication, approval, resource boundaries, credential identifiers/scopes, principals, delegation, persistence, selection, inventory knowledge, and evidence provenance.
 - Add input-schema fingerprints and top-level finite-constraint summaries without serializing enum/default values.
 - Preserve unknown-inventory caveats and reject invalid, failed, duplicate, or inconsistent snapshots.
@@ -11,7 +17,7 @@
 
 ## 0.2.0 — Connect native approval policy and saved catalogs
 
-- Add explicit server-to-catalog bindings through `approval-doctor.project.json`.
+- Add explicit server-to-catalog bindings through `coldgate.project.json`.
 - Join native OpenAI Responses MCP approval settings to saved tool definitions.
 - Preserve separate config/catalog evidence and SHA-256 catalog fingerprints.
 - Apply name allowlists, retain missing configured names as UNKNOWN inventory, and report unresolved annotation filters.
@@ -31,4 +37,4 @@
 
 ## 0.1.0 — Initial working checkpoint
 
-Authority Model, Approval Doctor CLI, static MCP and OpenAI JSON adapters, nine deterministic rules, fixture corpus, and text/JSON/SARIF output. No runtime enforcement or npm publication.
+Authority Model, Coldgate Scan CLI, static MCP and OpenAI JSON adapters, nine deterministic rules, fixture corpus, and text/JSON/SARIF output. No runtime enforcement or npm publication.

@@ -5,9 +5,9 @@
       "tools": [{
         "name": "create_issue",
         "requiresApproval": true,
-        "repositories": ["frostedlogic/coldgate"],
+        "repositories": ["canadianbaconking-collab/coldgate"],
         "annotations": {"readOnlyHint": false, "destructiveHint": false},
-        "inputSchema": {"type": "object", "properties": {"repo": {"const": "frostedlogic/coldgate"}}}
+        "inputSchema": {"type": "object", "properties": {"repo": {"const": "canadianbaconking-collab/coldgate"}}}
       }]
     }
   }

@@ -1,6 +1,6 @@
-# AuthorityDiff 0.3.0
+# Coldgate Diff 0.3.0
 
-AuthorityDiff asks: **what changed in the authority represented by these snapshots?** It consumes one Approval Doctor report object or a nonempty array of reports on each side. It does not run either agent or MCP server.
+Coldgate Diff asks: **what changed in the authority represented by these snapshots?** It consumes one Coldgate Scan report object or a nonempty array of reports on each side. It does not run either agent or MCP server.
 
 ## Generate and compare snapshots
 
@@ -9,11 +9,11 @@ Run from the Coldgate checkout in PowerShell:
 ```powershell
 cd C:\dev\playground\coldgate
 npm install --ignore-scripts
-node packages/approval-doctor/bin/approval-doctor.js examples/diff/before-config.json --format json > examples/diff/before.json
-node packages/approval-doctor/bin/approval-doctor.js examples/diff/after-config.json --format json > examples/diff/after.json
-npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --format markdown
-npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --format sarif
-npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --fail-on change
+node packages/cli/bin/coldgate.js scan examples/diff/before-config.json --format json > examples/diff/before.json
+node packages/cli/bin/coldgate.js scan examples/diff/after-config.json --format json > examples/diff/after.json
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --format markdown
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --format sarif
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --fail-on change
 ```
 
 The last command exits 1 because the example deliberately changes claims. Default mode reports changes with exit 0; `--fail-on change` returns 1 for **any** represented change, including provenance/evidence changes. Invalid or failed inputs always exit 2. `--fail-on never` selects report-only behavior. Inputs are bounded to 8 MB, 100 reports, and 10,000 records per report.
@@ -40,13 +40,13 @@ The schema fingerprint is deliberately conservative. It ignores object-key order
 
 ## GitHub Action
 
-The repository includes `.github/actions/authority-diff/action.yml`. Use Node 22.18+ (24 recommended), a **trusted pinned checkout of Coldgate**, and two snapshot JSON files within `GITHUB_WORKSPACE`. The repository remains private: other repositories need authorized access to its action. It is not published to the Marketplace.
+The repository includes `.github/actions/coldgate-diff/action.yml`. Use Node 22.18+ (24 recommended), a **trusted pinned checkout of Coldgate**, and two snapshot JSON files within `GITHUB_WORKSPACE`. The repository remains private: other repositories need authorized access to its action. It is not published to the Marketplace.
 
 After preparing those files and the trusted checkout, the relevant workflow step is:
 
 ```yaml
 - name: Compare authority
-  uses: ./trusted-coldgate/.github/actions/authority-diff
+  uses: ./trusted-coldgate/.github/actions/coldgate-diff
   with:
     before: snapshots/before.json
     after: snapshots/after.json
@@ -59,4 +59,4 @@ The Action runner is tested locally for changed, unchanged, and invalid inputs. 
 
 ## Programmatic API
 
-Import `diffSnapshots(before, after)` from the `authority-diff` workspace package. It returns `changes`, `warnings`, and `errors`. Each change includes kind, tool, before/after summaries, and explanation. All decisions are deterministic. No baseline storage service, auto-approval, policy replay, or runtime enforcement is included.
+Import `diffSnapshots(before, after)` from the `@coldgate/diff` workspace package. It returns `changes`, `warnings`, and `errors`. Each change includes kind, tool, before/after summaries, and explanation. All decisions are deterministic. No baseline storage service, auto-approval, policy replay, or runtime enforcement is included.

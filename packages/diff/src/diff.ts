@@ -2,7 +2,7 @@ import type { AuthorityRecord, Claim } from '../../authority/src/model.ts';
 import { validateSnapshots } from './validate.ts';
 
 export interface Change { kind: string; tool: string; before: string; after: string; explanation: string; }
-export interface AuthorityDiff { schemaVersion: '0.1'; changes: Change[]; warnings: string[]; errors: string[]; }
+export interface ColdgateDiff { schemaVersion: '0.1'; changes: Change[]; warnings: string[]; errors: string[]; }
 const safe = (v: string): string => v.replace(/[\x00-\x1f\x7f]/g, ' ').replace(/(?:token|secret|password|api[_-]?key|authorization)\s*[:=]\s*\S+/gi, '[redacted]').slice(0, 1000);
 const set = (v: string[]) => [...new Set(v)].sort();
 const show = (v: unknown) => safe(typeof v === 'string' ? v : JSON.stringify(v));
@@ -18,9 +18,9 @@ const claims = (r: AuthorityRecord): Record<string, Claim<unknown>> => ({
 });
 
 /** Compare represented claims only. Absence in a snapshot is not proof of revoked authority. */
-export function diffSnapshots(before: unknown, after: unknown): AuthorityDiff {
+export function diffSnapshots(before: unknown, after: unknown): ColdgateDiff {
   const a = validateSnapshots(before), b = validateSnapshots(after);
-  const result: AuthorityDiff = { schemaVersion: '0.1', changes: [], warnings: [], errors: [...a.errors.map(e => `Before: ${e}`), ...b.errors.map(e => `After: ${e}`)] };
+  const result: ColdgateDiff = { schemaVersion: '0.1', changes: [], warnings: [], errors: [...a.errors.map(e => `Before: ${e}`), ...b.errors.map(e => `After: ${e}`)] };
   if (result.errors.length) return result;
   const left = new Map(a.reports.flatMap(r => r.records).map(r => [key(r), r]));
   const right = new Map(b.reports.flatMap(r => r.records).map(r => [key(r), r]));

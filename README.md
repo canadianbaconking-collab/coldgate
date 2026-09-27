@@ -2,35 +2,35 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.3.0 contains `@frostedlogic/authority`, a reusable TypeScript authority record, `approval-doctor`, a local static analysis CLI, and `authority-diff` for comparing saved reports. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.3.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, and `coldgate diff` for comparing saved reports. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
-Node.js 22.18+ is required; 24 is recommended. The repository is private and the CLI is not published to npm. `npx approval-doctor .` becomes available only after an eventual npm publication. Today use the installed workspace binary:
+Node.js 22.18+ is required; 24 is recommended. The repository is private and the CLI is not published to npm. `npx coldgate scan .` becomes available only after an eventual npm publication. Today use the installed workspace binary:
 
 ```powershell
 cd C:\dev\playground
 git clone https://github.com/canadianbaconking-collab/coldgate.git
 cd coldgate
 npm install --ignore-scripts
-npm exec -- approval-doctor .
-npm exec -- approval-doctor fixtures\tools.json --format json
-npm exec -- approval-doctor fixtures\openai-hosted-mcp.json --format sarif
+npm exec -- coldgate scan .
+npm exec -- coldgate scan fixtures\tools.json --format json
+npm exec -- coldgate scan fixtures\openai-hosted-mcp.json --format sarif
 npm test
 ```
 
-`approval-doctor` also accepts `scan` before the input path. An explicit JSON file may have any name. For a directory, it checks `mcp.json`, `.mcp.json`, `claude_desktop_config.json`, `coldgate.json`, `openai-hosted-mcp.json`, `openai-responses.json`, and `tools.json` in the root, `.cursor`, `.vscode`, and `fixtures`. It does not recursively crawl arbitrary source trees. No matches, bad JSON, or unreadable input exits 2. `--fail-on warning` exits 1 when a WARN finding occurs; otherwise findings do not change exit status. A zero exit code does not certify a tool.
+Use `coldgate scan` to analyze configuration and `coldgate diff` to compare snapshots. An explicit JSON file may have any name. For a directory, it checks `mcp.json`, `.mcp.json`, `claude_desktop_config.json`, `coldgate.json`, `openai-hosted-mcp.json`, `openai-responses.json`, and `tools.json` in the root, `.cursor`, `.vscode`, and `fixtures`. It does not recursively crawl arbitrary source trees. No matches, bad JSON, or unreadable input exits 2. `--fail-on warning` exits 1 when a WARN finding occurs; otherwise findings do not change exit status. A zero exit code does not certify a tool.
 
 ## Connect native approval policy to a saved tool inventory
 
 ```powershell
-npm exec -- approval-doctor examples/connected
-npm exec -- approval-doctor examples/connected --format json
+npm exec -- coldgate scan examples/connected
+npm exec -- coldgate scan examples/connected --format json
 ```
 
 The runnable example joins native OpenAI Responses MCP settings to two saved tool catalogs. It demonstrates per-tool approval selectors and server-wide `require_approval: "always"`. Example endpoints and catalog contents are synthetic; they do not represent a live connected account. Replace them with your own native config and saved `tools/list` results. Coldgate never contacts those endpoints.
 
-Create `approval-doctor.project.json` beside your real configuration:
+Create `coldgate.project.json` beside your real configuration:
 
 ```json
 {
@@ -42,19 +42,19 @@ Create `approval-doctor.project.json` beside your real configuration:
 }
 ```
 
-`server` must exactly match the native configuration's `server_label`. Then run `npm exec -- approval-doctor .` in that directory. A root connection manifest takes precedence over loose-file discovery, so the same config and catalog are not counted twice. See [connected setup](docs/CONNECTED_CONFIGS.md) for native fields, trust boundaries, and unsupported selectors.
+`server` must exactly match the native configuration's `server_label`. Then run `npm exec -- coldgate scan .` in that directory. A root connection manifest takes precedence over loose-file discovery, so the same config and catalog are not counted twice. See [connected setup](docs/CONNECTED_CONFIGS.md) for native fields, trust boundaries, and unsupported selectors.
 
 ## Compare authority changes
 
 ```powershell
-npm exec -- authority-diff examples/diff/before.json examples/diff/after.json
-npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --format markdown
-npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --fail-on change
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --format markdown
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --fail-on change
 ```
 
 The final command deliberately exits 1: the example changes approval, scope, credentials, parameters, and tools. Invalid snapshots exit 2. Unchanged snapshots exit 0. The CLI compares represented claims, including evidence strength, without treating a removed entry as proven revocation. Source-file moves are reported separately as provenance changes.
 
-See [AuthorityDiff](docs/AUTHORITY_DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains private and unpublished.
+See [Coldgate Diff](docs/DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains private and unpublished.
 
 ## What is supported
 
@@ -72,7 +72,7 @@ Format references: [MCP tool definitions and annotation trust](https://modelcont
 ## Example
 
 ```text
-Frosted Logic — Approval Doctor
+Coldgate — Scan
 
 tools.json (mcp-tools-snapshot)
   github.push_files | WRITE, DESTRUCTIVE, OPEN_WORLD, EXTERNAL_COMMUNICATION [INFERRED] | approval UNSPECIFIED [UNKNOWN]
@@ -96,7 +96,7 @@ A declared write tool with `requiresApproval: true` reports the declared require
 ```powershell
 cd C:\dev\playground\coldgate
 npm test
-npm exec -- approval-doctor fixtures --fail-on warning
+npm exec -- coldgate scan fixtures --fail-on warning
 ```
 
 There are no runtime dependencies. The fixture corpus is synthetic. Runtime enforcement, prompt-injection detection, vulnerability scanning, and a hosted service remain outside this release.
@@ -110,7 +110,7 @@ Limits: 2 MB per file, 100 servers per server container, 1,000 tools per catalog
 Checkpoint 0.1.1 introduced 26 tests, including adversarial input cases and the golden report. Run the rejected-input example explicitly (it is outside normal directory discovery):
 
 ```powershell
-npm exec -- approval-doctor fixtures/adversarial/malformed-tools.json --format sarif
+npm exec -- coldgate scan fixtures/adversarial/malformed-tools.json --format sarif
 # Expected exit code: 2
 ```
 

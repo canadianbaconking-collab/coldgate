@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { scanConfig, scanFile, inferEffects } from '../packages/authority/src/index.ts';
-import { main, renderText } from '../packages/approval-doctor/src/cli.ts';
+import { main, renderText } from '../packages/cli/src/cli.ts';
 
 const fixture = (name: string) => new URL(`../fixtures/${name}`, import.meta.url).pathname;
 const capture = () => {

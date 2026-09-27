@@ -1,4 +1,4 @@
-Frosted Logic — Approval Doctor
+Coldgate — Scan
 
 tools.json (mcp-tools-snapshot)
   github.delete_issue | READ, WRITE, DESTRUCTIVE [DECLARED] | approval UNSPECIFIED [UNKNOWN]
