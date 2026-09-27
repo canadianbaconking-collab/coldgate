@@ -1,6 +1,6 @@
 # Coldgate development roadmap
 
-Status: v0.6.0 includes authority change semantics and the v0.5 Evidence Depth benchmark and coverage. Integration hardening follows. Work proceeds through reviewable commits and versioned checkpoints. The source of authority remains explicit claims, not one safety score.
+Status: v0.7.0 is the integration hardening checkpoint. v0.6.0 added authority change semantics, and v0.5 added evidence measurement. The source of authority remains explicit claims, not one safety score.
 
 ## v0.5 — Evidence Depth (completed)
 
@@ -23,7 +23,7 @@ Diff now adds `category` labels, a selected category CLI/Action gate, and an exp
 
 ## Integration hardening
 
-Verify npm package contents/install before proposing publication. Exercise the Action in hosted GitHub Actions with a pinned trusted checkout, add an external-repository CI example, and make artifacts easy to consume. Preserve untrusted PR and secret boundaries. Keep packages private and repository visibility unchanged until separately authorized.
+The root package builds a small JavaScript tarball and verifies an isolated offline install of all three CLI commands. Individual source workspaces remain private and are not installable tarballs. The `integration-smoke` workflow tests Node 22.18 and 24 and runs the composite Action on GitHub-hosted runners. An [external pull request example](../examples/github-actions/coldgate-diff.yml) pins a trusted Coldgate commit and compares separately scanned base/candidate configurations. Preserve untrusted PR and secret boundaries. npm publication remains a separate decision; the existing public repository's visibility is unchanged.
 
 ## Decision gate
 

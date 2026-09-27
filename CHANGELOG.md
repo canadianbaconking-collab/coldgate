@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 — Integration hardening
+
+- Build a single JavaScript root tarball using Node's type stripping API. Verify pack contents and install scan, diff, and trace in an isolated offline consumer; keep the individual workspace packages private and unpublished.
+- Add a pinned, read-only GitHub Actions integration smoke workflow and a pull request example that scans protected base and candidate configurations with trusted Coldgate code.
+- Correct repository visibility documentation and clarify that a successful static comparison does not establish runtime authority or enforcement.
+
 ## 0.6.0 — Authority change semantics
 
 - Add directional `category` labels to each Diff change without changing existing change kinds or schema-0.1 snapshot compatibility.

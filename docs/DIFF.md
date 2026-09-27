@@ -1,4 +1,4 @@
-# Coldgate Diff 0.6.0
+# Coldgate Diff 0.7.0
 
 Coldgate Diff asks: **what changed in the authority represented by these snapshots?** It consumes one Coldgate Scan report object or a nonempty array of reports on each side. It does not run either agent or MCP server.
 
@@ -59,7 +59,7 @@ The schema fingerprint is deliberately conservative. It ignores object-key order
 
 ## GitHub Action
 
-The repository includes `.github/actions/coldgate-diff/action.yml`. Use Node 22.18+ (24 recommended), a **trusted pinned checkout of Coldgate**, and two snapshot JSON files within `GITHUB_WORKSPACE`. The repository remains private: other repositories need authorized access to its action. It is not published to the Marketplace.
+The repository includes `.github/actions/coldgate-diff/action.yml`. Use Node 22.18+ (24 recommended), a **trusted pinned checkout of Coldgate**, and two snapshot JSON files within `GITHUB_WORKSPACE`. The repository is public; its action is not published to the Marketplace.
 
 After preparing those files and the trusted checkout, the relevant workflow step is:
 
@@ -75,7 +75,9 @@ After preparing those files and the trusted checkout, the relevant workflow step
 
 The step writes escaped Markdown to `GITHUB_STEP_SUMMARY`. That is the GitHub-supported job-summary mechanism; it is not a PR comment. If you want a comment, review `--format markdown` output and post it through your existing reviewed workflow. The action needs no write token or secret. Do not use an untrusted PR checkout as the code for a privileged workflow. Inputs are passed through environment variables, not injected into shell command text.
 
-The Action runner is tested locally for changed, unchanged, and invalid inputs. Hosted Actions execution has not been verified. The runner requires Node to have been installed by the calling workflow and limits summary output size. See [GitHub composite actions](https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action) and [job summaries](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#adding-a-job-summary).
+For a consuming repository, adapt [the full pull request example](../examples/github-actions/coldgate-diff.yml). It checks out the protected base and candidate configurations separately, generates snapshots from both with one reviewed Coldgate commit, and runs the same pinned Action without secrets or a write token. Replace `agent/` with your actual configuration directory and review the chosen selectors. Do not compare two snapshots that a pull request can both rewrite.
+
+The Action runner is tested locally for changed, unchanged, and invalid inputs. The repository's [integration smoke workflow](../.github/workflows/integration-smoke.yml) exercises the composite Action and tarball install on hosted runners; check its run status for hosted evidence. The runner requires Node to have been installed by the calling workflow and limits summary output size. See [GitHub composite actions](https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action) and [job summaries](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#adding-a-job-summary).
 
 ## Programmatic API
 

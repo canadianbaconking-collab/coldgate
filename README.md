@@ -2,11 +2,11 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.6.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.7.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
-Node.js 22.18+ is required; 24 is recommended. The repository is private and the CLI is not published to npm. `npx coldgate scan .` becomes available only after an eventual npm publication. Today use the installed workspace binary:
+Node.js 22.18+ is required; 24 is recommended. The repository is public, but Coldgate is not published to npm. Use the checked-out workspace binary:
 
 ```powershell
 cd C:\dev\playground
@@ -18,6 +18,19 @@ npm exec -- coldgate scan fixtures\tools.json --format json
 npm exec -- coldgate scan fixtures\openai-hosted-mcp.json --format sarif
 npm test
 ```
+
+For an isolated consumer, build the JavaScript tarball and install it locally. The individual `@coldgate/*` workspaces are source packages; use the root tarball for installation:
+
+```powershell
+cd C:\dev\playground\coldgate
+npm run verify:package
+npm pack --pack-destination ..
+cd C:\dev\playground\my-agent
+npm install --ignore-scripts ..\coldgate-0.7.0.tgz
+.\node_modules\.bin\coldgate.cmd scan .
+```
+
+`verify:package` checks the tarball contents and exercises scan, diff, and trace from an isolated offline install. The tarball contains JavaScript runtime files and no fixture corpus or test suite. No registry publication is implied.
 
 Use `coldgate scan` to analyze configuration and `coldgate diff` to compare snapshots. An explicit JSON file may have any name. For a directory, it checks `mcp.json`, `.mcp.json`, `claude_desktop_config.json`, `coldgate.json`, `openai-hosted-mcp.json`, `openai-responses.json`, and `tools.json` in the root, `.cursor`, `.vscode`, and `fixtures`. It does not recursively crawl arbitrary source trees. No matches, bad JSON, or unreadable input exits 2. `--fail-on warning` exits 1 when a WARN finding occurs; otherwise findings do not change exit status. A zero exit code does not certify a tool.
 
@@ -55,7 +68,7 @@ npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --f
 
 The two gated commands deliberately exit 1: the example changes approval, scope, credentials, parameters, and tools. The selective gate fails only on the named directional categories; invalid selectors and snapshots exit 2. Unchanged snapshots exit 0. The CLI compares represented claims, including evidence changes, without treating a removed entry as proven revocation. Source-file moves are reported separately as provenance changes.
 
-See [Coldgate Diff](docs/DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains private and unpublished.
+See [Coldgate Diff](docs/DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains unpublished.
 
 ## Review recorded capability use
 
@@ -102,6 +115,11 @@ tools.json (mcp-tools-snapshot)
       Missing: Effective approval behavior and an explicit policy for this operation.
 
 Summary: 4 entries; 0 unknown inventories; 0 explicit required approvals; 4 unspecified approvals; 2 warnings; 3 reviews.
+Evidence coverage (4 records; not a safety score):
+  effects: 0 declared only; 0 inferred only; 3 mixed; 0 observed claims; 0 enforced claims; 1 unknown.
+  approvals: 0 explicit; 0 conditional/inherited; 0 observed claims; 4 unknown.
+  inventory: 4 snapshots; 0 observed claims; 0 unknown.
+  boundaries: 1 explicit; 0 inferred; 0 observed claims; 3 unknown.
 Static declarations and hints do not prove runtime enforcement.
 ```
 

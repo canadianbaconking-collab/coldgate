@@ -1,0 +1,52 @@
+# Copy to .github/workflows/coldgate-diff.yml in the consuming repository.
+# This example assumes an agent/ directory containing mcp.json or coldgate.project.json.
+name: Review agent authority
+
+on:
+  pull_request:
+    paths:
+      - 'agent/**'
+      - '.github/workflows/coldgate-diff.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  authority:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted base configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - name: Checkout candidate configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: candidate
+          persist-credentials: false
+      - name: Checkout reviewed Coldgate code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: canadianbaconking-collab/coldgate
+          ref: 76f484b154e54d25374b54b4f0301e5805013ccc # reviewed v0.6.0 tree
+          path: trusted-coldgate
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Scan both configurations with trusted code
+        shell: bash
+        env:
+          COLDGATE_CLI: ${{ github.workspace }}/trusted-coldgate/packages/cli/bin/coldgate.js
+        run: |
+          (cd baseline && node "$COLDGATE_CLI" scan agent --format json) > before.json
+          (cd candidate && node "$COLDGATE_CLI" scan agent --format json) > after.json
+      - name: Review selected authority changes
+        uses: ./trusted-coldgate/.github/actions/coldgate-diff
+        with:
+          before: before.json
+          after: after.json
+          fail-on: selected
+          categories: approval:weakening,boundaries:widening,effects:expansion,uncertainty:increase

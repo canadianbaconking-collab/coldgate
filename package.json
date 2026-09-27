@@ -1,8 +1,14 @@
 {
   "name": "coldgate",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "coldgate": "./dist/packages/cli/bin/coldgate.js"
+  },
+  "files": [
+    "dist/"
+  ],
   "engines": {
     "node": ">=22.18.0"
   },
@@ -14,6 +20,9 @@
     "scan": "node packages/cli/bin/coldgate.js scan",
     "diff": "node packages/cli/bin/coldgate.js diff",
     "trace": "node packages/cli/bin/coldgate.js trace",
-    "benchmark": "node scripts/benchmark.mjs"
+    "benchmark": "node scripts/benchmark.mjs",
+    "build": "node scripts/build.mjs",
+    "prepack": "npm run build",
+    "verify:package": "node scripts/verify-package.mjs"
   }
 }
