@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0 — Pilot readiness
+
+- Add a repository-only local helper to summarize validated JSON scans as counts of evidence coverage, conditional selections, and fixed finding categories, without copying report identifiers or text. Reject failed or malformed reports and symlink inputs.
+- Document a repeatable independent-use pilot with setup, reviewed findings, source-backed misses, privacy boundaries, and a decision gate. No independent pilot result is claimed; package commands and scan semantics remain unchanged.
+
 ## 0.7.0 — Integration hardening
 
 - Build a single JavaScript root tarball using Node's type stripping API. Verify pack contents and install scan, diff, and trace in an isolated offline consumer; keep the individual workspace packages private and unpublished.

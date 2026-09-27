@@ -1,6 +1,6 @@
 # Coldgate development roadmap
 
-Status: v0.7.0 is the integration hardening checkpoint. v0.6.0 added authority change semantics, and v0.5 added evidence measurement. The source of authority remains explicit claims, not one safety score.
+Status: v0.8.0 is the pilot-readiness checkpoint. v0.7.0 hardened integration, v0.6.0 added authority change semantics, and v0.5 added evidence measurement. The source of authority remains explicit claims, not one safety score.
 
 ## v0.5 — Evidence Depth (completed)
 
@@ -27,4 +27,4 @@ The root package builds a small JavaScript tarball and verifies an isolated offl
 
 ## Decision gate
 
-Once Evidence Depth and Diff semantics are useful, seek independent usage rather than automatic platform expansion. PolicyReplay can then consume explicit trace evidence and deterministic policies; runtime enforcement waits for evidence of demand and a separate threat model.
+The [independent-use procedure](PILOT.md) now records setup friction, reviewed findings, and source-backed misses; its local count-only helper avoids copying identifiers into feedback summaries. This is pilot readiness, **not independent validation**. Seek independently operated configurations before automatic platform expansion. PolicyReplay can then consume explicit trace evidence and deterministic policies; runtime enforcement waits for evidence of demand and a separate threat model.

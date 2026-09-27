@@ -2,7 +2,7 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.7.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.8.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
@@ -26,7 +26,7 @@ cd C:\dev\playground\coldgate
 npm run verify:package
 npm pack --pack-destination ..
 cd C:\dev\playground\my-agent
-npm install --ignore-scripts ..\coldgate-0.7.0.tgz
+npm install --ignore-scripts ..\coldgate-0.8.0.tgz
 .\node_modules\.bin\coldgate.cmd scan .
 ```
 
@@ -88,6 +88,8 @@ npm run benchmark
 ```
 
 Scan reports now retain name, description, and annotation effect signals independently, flag conflicts and unknown authority combined with broad reach, and summarize effect, approval, inventory, and boundary evidence. The benchmark separates development examples from a nine-case holdout: only 1 of 4 consequential effects was found in that holdout, with no false positives among six benign examples. The parser remains deliberately conservative; see [measurement details and limitations](docs/EVIDENCE.md).
+
+For an independently operated configuration, follow the [local pilot procedure](docs/PILOT.md). Its repository-only summary helper reports counts without copying tool names, paths, or finding text. Independent pilot results have not been recorded yet.
 
 ## What is supported
 

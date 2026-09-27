@@ -34,7 +34,7 @@ export function renderDiff(report: ColdgateDiff, format: 'text' | 'markdown'): s
 }
 export function renderSarif(report: ColdgateDiff): object {
   return { version: '2.1.0', $schema: 'https://json.schemastore.org/sarif-2.1.0.json', runs: [{
-    tool: { driver: { name: 'Coldgate Diff', version: '0.7.0', rules: [...new Set(report.changes.map(c => c.kind))].sort().map(id => ({ id })) } },
+    tool: { driver: { name: 'Coldgate Diff', version: '0.8.0', rules: [...new Set(report.changes.map(c => c.kind))].sort().map(id => ({ id })) } },
     invocations: [{ executionSuccessful: !report.errors.length, toolExecutionNotifications: [
       ...report.errors.map(text => ({ level: 'error', message: { text } })),
       ...report.warnings.map(text => ({ level: 'warning', message: { text } })),

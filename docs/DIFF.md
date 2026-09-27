@@ -1,4 +1,4 @@
-# Coldgate Diff 0.7.0
+# Coldgate Diff 0.8.0
 
 Coldgate Diff asks: **what changed in the authority represented by these snapshots?** It consumes one Coldgate Scan report object or a nonempty array of reports on each side. It does not run either agent or MCP server.
 
