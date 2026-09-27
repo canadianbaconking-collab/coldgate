@@ -25,3 +25,11 @@ Structural validation is limited to fields used by the analyzer. It does not val
 Connection manifests may reference only relative files below their own directory, using forward slashes with no dot/parent components. Referenced symlink components and nonregular files are rejected. Reads are bounded to 2 MB even if a file grows, and use no-follow/nonblocking flags where available. These checks are not an OS sandbox against another process concurrently replacing directories. Use a stable checkout for analysis.
 
 The connection manifest is a user-supplied association, not proof of server identity. Catalog fingerprints do not prove freshness or authenticity. Omitted pagination metadata cannot be detected; callers must supply the complete saved catalog. A saved tool definition cannot supply authoritative client approvals, credentials, or resource restrictions. Connected mode ignores those catalog fields when building capabilities. Example data is synthetic; no server or account was queried to generate it.
+
+## Snapshot comparison
+
+AuthorityDiff consumes untrusted JSON reports under 8 MB each. It checks required claims, supported schema versions, duplicate identities, and failed-analysis markers before comparing. Error messages never echo the report's raw error strings. Displayed identifiers and scope strings are sanitized; Markdown escapes HTML and mentions. Snapshot authors can forge any claim, including OBSERVED or ENFORCED. The differ reports those assertions without validating their truth.
+
+Parameter schema values are not emitted. Their fingerprint is not encryption: someone who knows all but a small secret can test guesses against a hash. Do not embed real secrets in schemas or commit sensitive reports. Source paths, property names, credential identifiers and resource names can still be sensitive.
+
+Input schema processing is bounded to depth 64 and 10,000 visited elements. General JSON Schema implication is out of scope. An unchanged diff means no supported represented claim changed, not that authority is unchanged at runtime. A missing record does not prove revocation. The CI Action must run from a trusted pinned revision; evaluating untrusted snapshots does not require executing the code in their PR.

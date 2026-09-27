@@ -1,6 +1,7 @@
 import { lstat, readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import type { Approval, AuthorityRecord, Boundary, Capability, Claim, Effect, Report } from './model.ts';
+import { parameterSurface } from './parameters.ts';
 import { assess } from './rules.ts';
 import { validateInput } from './validate.ts';
 
@@ -94,6 +95,7 @@ function normalize(provider: string, name: string, tool: Record<string, unknown>
     principal: { kind: 'mcp_server', name: safe(provider), claim: declared(safe(provider), serverPath) },
     capability: {
       provider: safe(provider), operation: safe(name),
+      parameters: parameterSurface(tool.inputSchema, `${path}.inputSchema`),
       effects: claim(evidence.map(e => e.value), aggregateStatus, [...new Set(evidence.map(e => e.source))].join(' + '), 'Aggregate status is no stronger than its weakest member; see effectEvidence'),
       effectEvidence: evidence,
       boundaries: boundaries(tool, server, path, serverPath), destination: unknown('unknown', path),

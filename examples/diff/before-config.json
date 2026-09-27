@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "repository": {
+      "env": {"READ_TOKEN": "SYNTHETIC_SECRET_DO_NOT_EXPORT"},
+      "tools": [{
+        "name": "create_issue",
+        "requiresApproval": true,
+        "repositories": ["frostedlogic/coldgate"],
+        "annotations": {"readOnlyHint": false, "destructiveHint": false},
+        "inputSchema": {"type": "object", "properties": {"repo": {"const": "frostedlogic/coldgate"}}}
+      }]
+    }
+  }
+}

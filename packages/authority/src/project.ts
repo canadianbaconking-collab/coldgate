@@ -41,6 +41,7 @@ async function readDocument(base: string, relative: string): Promise<{ value: un
 
 function qualify(record: AuthorityRecord, source: string): void {
   const c = record.capability;
+  if (c.parameters) c.parameters.source = `${source}:${c.parameters.source}`;
   for (const claim of [record.principal.claim, record.inventory, c.effects, ...c.effectEvidence, c.destination, c.credentialNames, c.scopes, c.approval, c.delegation, c.persistence, ...c.boundaries.map(b => b.claim)]) claim.source = `${source}:${claim.source}`;
 }
 
@@ -86,7 +87,7 @@ export async function scanProject(file: string): Promise<Report> {
       // Catalog-supplied approval/scopes are not trusted as client policy. Only MCP tool hints are imported.
       const definitions = catalog.tools as Record<string, unknown>[];
       if (!definitions.every(t => identity(t.name))) return fail(`Inventory binding ${index} contains a tool name outside the supported identity format`);
-      const clean = definitions.map(t => ({ name: t.name, ...(t.annotations === undefined ? {} : { annotations: t.annotations }) }));
+      const clean = definitions.map(t => ({ name: t.name, ...(t.inputSchema === undefined ? {} : { inputSchema: t.inputSchema }), ...(t.annotations === undefined ? {} : { annotations: t.annotations }) }));
       const catalogReport = scanConfig({ serverName: provider, tools: clean });
       if (catalogReport.errors.length) return fail(`Inventory binding ${index} cannot be normalized`);
       const allow = server.allowed_tools;

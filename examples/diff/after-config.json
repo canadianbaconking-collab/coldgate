@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "repository": {
+      "env": {"READ_TOKEN": "SYNTHETIC_SECRET_DO_NOT_EXPORT", "WRITE_TOKEN": "SYNTHETIC_SECRET_DO_NOT_EXPORT"},
+      "tools": [
+        {
+          "name": "create_issue",
+          "requiresApproval": false,
+          "repositories": ["*"],
+          "annotations": {"readOnlyHint": false, "destructiveHint": true},
+          "inputSchema": {"type": "object", "properties": {"repo": {"type": "string"}}}
+        },
+        {"name": "send_email", "requiresApproval": false, "annotations": {"openWorldHint": true}}
+      ]
+    }
+  }
+}

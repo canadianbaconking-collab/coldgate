@@ -6,7 +6,9 @@ export type BoundaryKind = 'file' | 'directory' | 'repository' | 'repository_pat
 export interface Claim<T> { value: T; status: Status; source: string; explanation: string; }
 export interface Boundary { kind: BoundaryKind; value: string; claim: Claim<string>; }
 export interface Principal { kind: 'user' | 'agent' | 'subagent' | 'mcp_server' | 'tool' | 'service_identity' | 'unknown'; name: string; claim: Claim<string>; }
+export interface ParameterSurface { fingerprint: string; finiteProperties: string[]; }
 export interface Capability {
+  parameters?: Claim<ParameterSurface>;
   provider: string;
   operation: string;
   effects: Claim<Effect[]>;

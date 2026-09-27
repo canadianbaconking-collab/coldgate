@@ -1,0 +1,9 @@
+{
+  "name": "authority-diff",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.18.0"},
+  "exports": {".": "./src/diff.ts"},
+  "bin": {"authority-diff": "./bin/authority-diff.js"}
+}

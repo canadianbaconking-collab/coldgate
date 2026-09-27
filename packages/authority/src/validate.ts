@@ -38,6 +38,18 @@ export function validateInput(input: unknown): string[] {
       else seen.add(name);
       if (key !== undefined && owns(value, 'name') && value.name !== key) fail(locator, 'has a name different from its map key');
       overlay(value, locator);
+      if (owns(value, 'inputSchema')) {
+        if (!obj(value.inputSchema)) fail(`${locator}.inputSchema`, 'must be a JSON Schema object');
+        else {
+          const stack: [unknown, number][] = [[value.inputSchema, 0]];
+          let count = 0;
+          while (stack.length) {
+            const [item, depth] = stack.pop()!;
+            if (++count > 10000 || depth > 64) { fail(`${locator}.inputSchema`, 'exceeds supported schema complexity'); break; }
+            if (item && typeof item === 'object') for (const child of Object.values(item)) stack.push([child, depth + 1]);
+          }
+        }
+      }
       if (owns(value, 'annotations')) {
         if (!obj(value.annotations)) fail(`${locator}.annotations`, 'must be an object');
         else for (const k of ['readOnlyHint', 'destructiveHint', 'openWorldHint', 'idempotentHint'])

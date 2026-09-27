@@ -1,0 +1,128 @@
+[
+  {
+    "schemaVersion": "0.1",
+    "source": "before-config.json",
+    "format": "mcp-client-json",
+    "records": [
+      {
+        "id": "repository.create_issue",
+        "principal": {
+          "kind": "mcp_server",
+          "name": "repository",
+          "claim": {
+            "value": "repository",
+            "status": "DECLARED",
+            "source": "mcpServers.repository",
+            "explanation": "Declared in static input"
+          }
+        },
+        "capability": {
+          "provider": "repository",
+          "operation": "create_issue",
+          "parameters": {
+            "value": {
+              "fingerprint": "20271bffc7990e2e99d4939336fe14a34c8c1ff9673fec15d548d2ead5eb94be",
+              "finiteProperties": [
+                "repo"
+              ]
+            },
+            "status": "DECLARED",
+            "source": "mcpServers.repository.tools.create_issue.inputSchema",
+            "explanation": "Input schema declaration; fingerprint is not an enforcement or equivalence proof"
+          },
+          "effects": {
+            "value": [
+              "WRITE"
+            ],
+            "status": "DECLARED",
+            "source": "mcpServers.repository.tools.create_issue.annotations",
+            "explanation": "Aggregate status is no stronger than its weakest member; see effectEvidence"
+          },
+          "effectEvidence": [
+            {
+              "value": "WRITE",
+              "status": "DECLARED",
+              "source": "mcpServers.repository.tools.create_issue.annotations",
+              "explanation": "Untrusted MCP descriptive hint"
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "repository_pattern",
+              "value": "frostedlogic/coldgate",
+              "claim": {
+                "value": "frostedlogic/coldgate",
+                "status": "DECLARED",
+                "source": "mcpServers.repository.tools.create_issue.repositories",
+                "explanation": "Declared in static input"
+              }
+            }
+          ],
+          "destination": {
+            "value": "unknown",
+            "status": "UNKNOWN",
+            "source": "mcpServers.repository.tools.create_issue",
+            "explanation": "No supported static evidence"
+          },
+          "credentialNames": {
+            "value": [
+              "READ_TOKEN"
+            ],
+            "status": "DECLARED",
+            "source": "mcpServers.repository.env keys",
+            "explanation": "Declared in static input"
+          },
+          "scopes": {
+            "value": [],
+            "status": "UNKNOWN",
+            "source": "mcpServers.repository.tools.create_issue",
+            "explanation": "No supported static evidence"
+          },
+          "approval": {
+            "value": "REQUIRED",
+            "status": "DECLARED",
+            "source": "mcpServers.repository.tools.create_issue.requiresApproval",
+            "explanation": "Coldgate overlay declaration, not MCP enforcement"
+          },
+          "delegation": {
+            "value": "unknown",
+            "status": "UNKNOWN",
+            "source": "mcpServers.repository.tools.create_issue",
+            "explanation": "No supported static evidence"
+          },
+          "persistence": {
+            "value": "unknown",
+            "status": "UNKNOWN",
+            "source": "mcpServers.repository.tools.create_issue",
+            "explanation": "No supported static evidence"
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "inventory": {
+          "value": "snapshot",
+          "status": "DECLARED",
+          "source": "mcpServers.repository.tools.create_issue",
+          "explanation": "Static snapshot may differ from live server"
+        }
+      }
+    ],
+    "findings": [
+      {
+        "rule": "CG005",
+        "level": "INFO",
+        "recordId": "repository.create_issue",
+        "observed": "Approval is explicitly configured as required.",
+        "inferred": "None.",
+        "reason": "Static configuration does not prove runtime enforcement or a human reviewer.",
+        "missing": "Runtime enforcement evidence.",
+        "evidence": [
+          "mcpServers.repository.tools.create_issue.requiresApproval"
+        ]
+      }
+    ],
+    "errors": []
+  }
+]

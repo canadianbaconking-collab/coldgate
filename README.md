@@ -2,7 +2,7 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.2.0 contains `@frostedlogic/authority`, a reusable TypeScript authority record, and `approval-doctor`, a local static analysis CLI. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.3.0 contains `@frostedlogic/authority`, a reusable TypeScript authority record, `approval-doctor`, a local static analysis CLI, and `authority-diff` for comparing saved reports. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
@@ -43,6 +43,18 @@ Create `approval-doctor.project.json` beside your real configuration:
 ```
 
 `server` must exactly match the native configuration's `server_label`. Then run `npm exec -- approval-doctor .` in that directory. A root connection manifest takes precedence over loose-file discovery, so the same config and catalog are not counted twice. See [connected setup](docs/CONNECTED_CONFIGS.md) for native fields, trust boundaries, and unsupported selectors.
+
+## Compare authority changes
+
+```powershell
+npm exec -- authority-diff examples/diff/before.json examples/diff/after.json
+npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --format markdown
+npm exec -- authority-diff examples/diff/before.json examples/diff/after.json --fail-on change
+```
+
+The final command deliberately exits 1: the example changes approval, scope, credentials, parameters, and tools. Invalid snapshots exit 2. Unchanged snapshots exit 0. The CLI compares represented claims, including evidence strength, without treating a removed entry as proven revocation. Source-file moves are reported separately as provenance changes.
+
+See [AuthorityDiff](docs/AUTHORITY_DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains private and unpublished.
 
 ## What is supported
 
@@ -87,7 +99,7 @@ npm test
 npm exec -- approval-doctor fixtures --fail-on warning
 ```
 
-There are no runtime dependencies. The fixture corpus is synthetic. This initial milestone does not include AuthorityDiff, runtime enforcement, prompt-injection detection, vulnerability scanning, or a hosted service.
+There are no runtime dependencies. The fixture corpus is synthetic. Runtime enforcement, prompt-injection detection, vulnerability scanning, and a hosted service remain outside this release.
 
 ## Checkpoint 0.1.1 — input validation and failure reporting
 
@@ -95,7 +107,7 @@ Malformed supported input now fails the entire document with exit code 2; valid-
 
 Limits: 2 MB per file, 100 servers per server container, 1,000 tools per catalog, and 50 validation diagnostics per document. Each document must contain exactly one root container. Native Responses inputs must contain only MCP tool entries; mixed function/built-in tool requests are explicitly unsupported. Annotation-dependent approval selectors remain CONDITIONAL. An explicit empty `allowed_tools: []` produces no candidate operations; it does not establish whole-agent safety.
 
-The suite contains 26 tests, including adversarial input cases and the golden report. Run the rejected-input example explicitly (it is outside normal directory discovery):
+Checkpoint 0.1.1 introduced 26 tests, including adversarial input cases and the golden report. Run the rejected-input example explicitly (it is outside normal directory discovery):
 
 ```powershell
 npm exec -- approval-doctor fixtures/adversarial/malformed-tools.json --format sarif
@@ -103,3 +115,5 @@ npm exec -- approval-doctor fixtures/adversarial/malformed-tools.json --format s
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for checkpoint history.
+
+The current suite contains 61 tests. Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).

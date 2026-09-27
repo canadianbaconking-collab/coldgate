@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — AuthorityDiff MVP
+
+- Add a reusable snapshot differ and `authority-diff` CLI with text, JSON, Markdown, and SARIF output.
+- Compare tools, effects, external communication, approval, resource boundaries, credential identifiers/scopes, principals, delegation, persistence, selection, inventory knowledge, and evidence provenance.
+- Add input-schema fingerprints and top-level finite-constraint summaries without serializing enum/default values.
+- Preserve unknown-inventory caveats and reject invalid, failed, duplicate, or inconsistent snapshots.
+- Add an optional change exit gate and a composite GitHub Action that writes a job summary without posting comments.
+- Add synthetic before/after snapshots and golden review output. 61 tests pass locally, including the Action runner; hosted GitHub Actions execution is not yet verified.
+
 ## 0.2.0 — Connect native approval policy and saved catalogs
 
 - Add explicit server-to-catalog bindings through `approval-doctor.project.json`.

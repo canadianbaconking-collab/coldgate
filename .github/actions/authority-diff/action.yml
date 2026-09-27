@@ -1,0 +1,23 @@
+name: Coldgate AuthorityDiff
+description: Compare two saved authority snapshots and write a review summary
+inputs:
+  before:
+    description: Baseline JSON snapshot path within the workspace
+    required: true
+  after:
+    description: Candidate JSON snapshot path within the workspace
+    required: true
+  fail-on:
+    description: Use change to fail on differences, or never to report only
+    default: change
+runs:
+  using: composite
+  steps:
+    - name: Compare authority snapshots
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/run.mjs"
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        AUTHORITY_DIFF_BEFORE: ${{ inputs.before }}
+        AUTHORITY_DIFF_AFTER: ${{ inputs.after }}
+        AUTHORITY_DIFF_FAIL_ON: ${{ inputs.fail-on }}

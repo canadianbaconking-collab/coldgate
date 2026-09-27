@@ -19,3 +19,11 @@ SARIF records analysis failures in `runs[].invocations[]`, independently of secu
 `project.ts` reads a Coldgate project manifest and binds every server in one native Responses MCP configuration to one catalog. It normalizes only standard tool names and annotation hints from the catalog, then assigns approval from the native config and reruns the deterministic rules. Catalog-only tools excluded by an explicit name allowlist do not generate current-capability findings. Missing configured names produce unknown-inventory records and CG010. Annotation-dependent selection retains candidates with a CONDITIONAL selection and CG011.
 
 Reports add optional `connections` metadata and optional per-record `selection` claims. The schema remains additive under 0.1. Fingerprints identify the exact catalog bytes, including JSON-RPC envelopes; they do not authenticate the catalog or establish freshness. Config hashes are deliberately omitted to avoid fingerprinting credentials. Binding by server label is an explicit user declaration, not an independently verified server identity.
+
+## AuthorityDiff (0.3.0)
+
+`packages/authority-diff` validates existing schema-0.1 reports, matches tools by `(provider, operation)` tuples, and emits deterministic changes. Duplicate identities across a report collection fail comparison. Ordering within set-like fields is ignored; provenance and epistemic status remain independently comparable. Connection fingerprints and non-authority narrative changes are not diffed by themselves.
+
+The authority model gains optional `parameters`, a declared canonical input-schema fingerprint plus names of top-level properties with `enum` or `const`. A removed finite restriction is a review hint, not a general JSON Schema widening proof. Reordered object keys leave the fingerprint unchanged; other syntactic changes may still be semantically equivalent. Older reports without this optional claim remain valid and produce a not-recorded-to-recorded change when compared with new ones.
+
+AuthorityDiff validates only the snapshot contract it consumes. It cannot authenticate claimed OBSERVED/ENFORCED evidence. The Action wrapper runs the same CLI, takes snapshot paths through environment variables, checks workspace containment, and writes escaped Markdown to the job summary.

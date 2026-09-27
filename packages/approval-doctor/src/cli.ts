@@ -39,7 +39,7 @@ export function renderText(reports: Report[]): string {
 function renderSarif(reports: Report[]): object {
   const all = reports.flatMap(report => report.findings.map(finding => ({ report, finding })));
   return { version: '2.1.0', $schema: 'https://json.schemastore.org/sarif-2.1.0.json', runs: [{
-    tool: { driver: { name: 'Approval Doctor', version: '0.2.0', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
+    tool: { driver: { name: 'Approval Doctor', version: '0.3.0', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
     invocations: [{ executionSuccessful: !reports.some(r => r.errors.length),
       toolExecutionNotifications: reports.flatMap(r => r.errors.map(message => ({ level: 'error', message: { text: `${r.source}: ${message}` } }))) }],
     results: all.map(({ report, finding }) => ({ ruleId: finding.rule, level: finding.level === 'WARN' ? 'warning' : 'note',
