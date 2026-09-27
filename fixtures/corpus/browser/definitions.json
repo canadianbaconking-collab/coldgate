@@ -1,0 +1,11 @@
+{
+  "repository": "microsoft/playwright",
+  "commit": "b9a34ac7783a1b6c2e1dfff0c08ac744c048fa59",
+  "license": "Apache-2.0",
+  "definition": "packages/playwright-core/src/tools/backend/evaluate.ts and navigate.ts",
+  "groundTruth": "packages/playwright-core/src/tools/backend/evaluate.ts and navigate.ts handlers",
+  "cases": [
+    {"name":"browser_evaluate","description":"Evaluate JavaScript expression on page or element","expectedEffects":["EXECUTE"],"labelNote":"Handler evaluates supplied code in the page or element context."},
+    {"name":"browser_navigate","description":"Navigate to a URL","expectedEffects":["EXTERNAL_COMMUNICATION","OPEN_WORLD"],"labelNote":"Handler navigates to caller-provided URL, potentially contacting arbitrary destinations."}
+  ]
+}

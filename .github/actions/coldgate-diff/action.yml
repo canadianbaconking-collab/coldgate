@@ -8,8 +8,11 @@ inputs:
     description: Candidate JSON snapshot path within the workspace
     required: true
   fail-on:
-    description: Use change to fail on differences, or never to report only
+    description: Use change for all differences, selected for listed categories, or never to report only
     default: change
+  categories:
+    description: Comma-separated area:direction selectors when fail-on is selected
+    required: false
 runs:
   using: composite
   steps:
@@ -21,3 +24,4 @@ runs:
         COLDGATE_DIFF_BEFORE: ${{ inputs.before }}
         COLDGATE_DIFF_AFTER: ${{ inputs.after }}
         COLDGATE_DIFF_FAIL_ON: ${{ inputs.fail-on }}
+        COLDGATE_DIFF_CATEGORIES: ${{ inputs.categories }}

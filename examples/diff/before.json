@@ -34,8 +34,8 @@
             "value": [
               "WRITE"
             ],
-            "status": "DECLARED",
-            "source": "mcpServers.repository.tools.create_issue.annotations",
+            "status": "INFERRED",
+            "source": "mcpServers.repository.tools.create_issue.annotations + mcpServers.repository.tools.create_issue.name",
             "explanation": "Aggregate status is no stronger than its weakest member; see effectEvidence"
           },
           "effectEvidence": [
@@ -44,6 +44,12 @@
               "status": "DECLARED",
               "source": "mcpServers.repository.tools.create_issue.annotations",
               "explanation": "Untrusted MCP descriptive hint"
+            },
+            {
+              "value": "WRITE",
+              "status": "INFERRED",
+              "source": "mcpServers.repository.tools.create_issue.name",
+              "explanation": "Hypothesis from operation name"
             }
           ],
           "boundaries": [
@@ -123,6 +129,34 @@
         ]
       }
     ],
-    "errors": []
+    "errors": [],
+    "coverage": {
+      "records": 1,
+      "effect": {
+        "declaredOnly": 0,
+        "inferredOnly": 0,
+        "mixed": 1,
+        "observedClaim": 0,
+        "enforcedClaim": 0,
+        "unknown": 0
+      },
+      "approval": {
+        "explicit": 1,
+        "conditionalInherited": 0,
+        "observedClaim": 0,
+        "unknown": 0
+      },
+      "inventory": {
+        "snapshot": 1,
+        "observedClaim": 0,
+        "unknown": 0
+      },
+      "boundary": {
+        "explicit": 1,
+        "inferred": 0,
+        "observedClaim": 0,
+        "unknown": 0
+      }
+    }
   }
 ]

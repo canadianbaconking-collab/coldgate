@@ -18,14 +18,65 @@ test('unchanged reports and set reordering produce no changes', () => {
   assert.deepEqual(diffSnapshots(a, b).errors, []);
 });
 
+test('old schema-0.1 snapshots without derived coverage remain comparable', () => {
+  const a = sample(), b = structuredClone(a);
+  delete a.coverage;
+  assert.deepEqual(diffSnapshots(a, b).errors, []);
+  assert.deepEqual(diffSnapshots(a, b).changes, []);
+});
+
 test('reports approval loss, wildcard scopes and credential identifier changes', () => {
   const a = sample(), b = structuredClone(a), c = b.records[0].capability;
+  a.records[0].capability.credentialNames.status = 'DECLARED'; c.credentialNames.status = 'DECLARED';
   c.approval.value = 'NOT_REQUIRED';
   c.boundaries[0].value = '*'; c.boundaries[0].claim.value = '*';
   c.credentialNames.value.push('GITHUB_TOKEN');
   assert.ok(kinds(diffSnapshots(a, b)).includes('APPROVAL_CHANGED'));
   assert.ok(kinds(diffSnapshots(a, b)).includes('CREDENTIALS_CHANGED'));
   assert.ok(diffSnapshots(a, b).changes.some(c => c.kind === 'BOUNDARIES_CHANGED' && c.explanation.includes('wildcard')));
+  assert.ok(diffSnapshots(a, b).changes.some(c => c.category === 'approval:weakening'));
+  assert.ok(diffSnapshots(a, b).changes.some(c => c.category === 'boundaries:widening'));
+  assert.ok(diffSnapshots(a, b).changes.some(c => c.category === 'credentials:expansion'));
+});
+
+test('direction is limited to represented comparisons and unknown effects remain unresolved', () => {
+  const a = sample(), b = structuredClone(a), c = b.records[0].capability;
+  a.records[0].capability.scopes.status = 'DECLARED'; c.scopes.status = 'DECLARED';
+  c.approval.value = 'NOT_REQUIRED';
+  c.boundaries[0].value = '*'; c.boundaries[0].claim.value = '*';
+  c.scopes.value.push('issue:write');
+  const reverse = diffSnapshots(b, a).changes;
+  assert.ok(reverse.some(v => v.category === 'approval:strengthening'));
+  assert.ok(reverse.some(v => v.category === 'boundaries:narrowing'));
+  assert.ok(reverse.some(v => v.category === 'scopes:contraction'));
+  c.approval.value = 'CONDITIONAL';
+  c.effects.value = ['UNKNOWN']; c.effectEvidence = [{ value: 'UNKNOWN', status: 'UNKNOWN', source: 'test', explanation: '' }];
+  const changes = diffSnapshots(a, b).changes;
+  assert.ok(changes.some(v => v.category === 'approval:unresolved'));
+  assert.ok(changes.some(v => v.category === 'effects:unresolved'));
+  assert.ok(changes.some(v => v.category === 'uncertainty:increase'));
+});
+
+test('patterns and conditional selection do not imply a directional exposure', () => {
+  const a = sample(), b = structuredClone(a);
+  a.records[0].capability.boundaries[0].value = 'owner/*';
+  a.records[0].capability.boundaries[0].claim.value = 'owner/*';
+  b.records[0].capability.boundaries[0].value = '*';
+  b.records[0].capability.boundaries[0].claim.value = '*';
+  a.records[0].selection = { value: 'CONDITIONAL', status: 'DECLARED', source: 'test', explanation: '' };
+  b.records[0].selection = { value: 'INCLUDED', status: 'DECLARED', source: 'test', explanation: '' };
+  const changes = diffSnapshots(a, b).changes;
+  assert.ok(changes.some(c => c.kind === 'BOUNDARIES_CHANGED' && c.category === 'boundaries:unresolved'));
+  assert.ok(changes.some(c => c.kind === 'SELECTION_CHANGED' && c.category === 'inventory:unresolved'));
+});
+
+test('new external effect with a removed effect is mixed, not expansion', () => {
+  const a = sample(), b = structuredClone(a);
+  b.records[0].capability.effects.value = ['EXTERNAL_COMMUNICATION'];
+  b.records[0].capability.effectEvidence = [{ value: 'EXTERNAL_COMMUNICATION', status: 'INFERRED', source: 'test', explanation: '' }];
+  const changes = diffSnapshots(a, b).changes;
+  assert.ok(changes.some(c => c.kind === 'EFFECTS_CHANGED' && c.category === 'effects:mixed'));
+  assert.ok(changes.some(c => c.kind === 'EXTERNAL_EFFECT_ADDED' && c.category === 'effects:unresolved'));
 });
 
 test('status-only changes are not lost', () => {
@@ -33,6 +84,8 @@ test('status-only changes are not lost', () => {
   b.records[0].capability.approval.status = 'UNKNOWN';
   assert.ok(kinds(diffSnapshots(a, b)).includes('EVIDENCE_CHANGED'));
   assert.ok(!kinds(diffSnapshots(a, b)).includes('APPROVAL_CHANGED'));
+  assert.ok(diffSnapshots(a, b).changes.some(c => c.category === 'evidence:loss'));
+  assert.ok(diffSnapshots(a, b).changes.some(c => c.category === 'uncertainty:increase'));
 });
 
 test('new external side effect and per-effect evidence changes are visible', () => {
@@ -109,11 +162,24 @@ test('CLI change gate and golden Markdown output', async () => {
   assert.equal(await main(['fixtures/adversarial/malformed-tools.json', 'examples/diff/after.json'], silent), 2);
 });
 
+test('selected CI gate accepts exact known categories and rejects invalid lists', async () => {
+  const out = { value: '', write(s: string) { this.value += s; return true; } };
+  const files = ['examples/diff/before.json', 'examples/diff/after.json'];
+  assert.equal(await main([...files, '--fail-on', 'selected', '--categories', 'approval:weakening,boundaries:widening'], out as typeof process.stdout), 1);
+  assert.equal(await main([...files, '--fail-on', 'selected', '--categories', 'approval:strengthening'], out as typeof process.stdout), 0);
+  assert.equal(await main([...files, '--fail-on', 'selected'], out as typeof process.stdout, out as typeof process.stderr), 2);
+  assert.equal(await main([...files, '--fail-on', 'selected', '--categories', 'approval:weakening,approval:weakening'], out as typeof process.stdout, out as typeof process.stderr), 2);
+  assert.equal(await main([...files, '--fail-on', 'never', '--categories', 'approval:weakening'], out as typeof process.stdout, out as typeof process.stderr), 2);
+  assert.equal(await main([...files, '--fail-on', 'selected', '--categories', 'approval:made-up'], out as typeof process.stdout, out as typeof process.stderr), 2);
+  assert.equal(await main(['fixtures/adversarial/malformed-tools.json', files[1], '--fail-on', 'selected', '--categories', 'approval:weakening'], out as typeof process.stdout), 2);
+});
+
 test('SARIF preserves comparison failure and change semantics', () => {
   const a = sample(), b = structuredClone(a); b.records[0].capability.approval.value = 'NOT_REQUIRED';
   const good = renderSarif(diffSnapshots(a, b)) as any;
   assert.equal(good.runs[0].invocations[0].executionSuccessful, true);
   assert.ok(good.runs[0].results.some((r: any) => r.ruleId === 'APPROVAL_CHANGED'));
+  assert.ok(good.runs[0].results.some((r: any) => r.properties.category === 'approval:weakening'));
   const bad = renderSarif(diffSnapshots(a, {})) as any;
   assert.equal(bad.runs[0].invocations[0].executionSuccessful, false);
   assert.ok(bad.runs[0].invocations[0].toolExecutionNotifications.length);

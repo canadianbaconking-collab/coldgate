@@ -4,6 +4,7 @@ import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { AuthorityRecord, Report } from './model.ts';
 import { resolveApproval, scanConfig } from './scan.ts';
+import { summarizeCoverage } from './coverage.ts';
 import { assess } from './rules.ts';
 
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -120,6 +121,7 @@ export async function scanProject(file: string): Promise<Report> {
       }
       report.connections!.push({ provider: label(provider), configSource: label(manifest.config), catalogSource: label(catalogSource), sha256, listed: definitions.length, included: candidates.length - missing.length, excluded: definitions.length - (candidates.length - missing.length), missing: missing.length, selectionConditional });
     }
+    report.coverage = summarizeCoverage(report.records);
     return report;
   } catch { return fail('Unable to read or validate project manifest'); }
 }

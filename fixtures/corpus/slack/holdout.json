@@ -1,0 +1,8 @@
+{
+  "repository":"modelcontextprotocol/servers-archived","commit":"9be4674d1ddf8c469e6461a27a337eeb65f76c2e","license":"MIT",
+  "definition":"src/slack/index.ts","groundTruth":"src/slack/index.ts call_tool handler",
+  "cases":[
+    {"name":"slack_reply_to_thread","description":"Reply to a specific message thread in Slack","expectedEffects":["WRITE","EXTERNAL_COMMUNICATION"],"labelNote":"Handler posts a threaded Slack message visible to participants."},
+    {"name":"slack_get_thread_replies","description":"Get all replies in a message thread","expectedEffects":["READ"],"labelNote":"Handler retrieves Slack thread replies."}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "repository": "github/github-mcp-server",
+  "commit": "85598ba6e1256f7ebf4867b95d63b833c4549264",
+  "license": "MIT",
+  "definition": "README.md",
+  "groundTruth": "pkg/github/issues.go and pkg/github/repositories.go",
+  "cases": [
+    {"name":"list_issues","description":"List issues","expectedEffects":["READ"],"labelNote":"Issues handler queries issue records."},
+    {"name":"delete_file","description":"Delete file","expectedEffects":["WRITE","DESTRUCTIVE"],"labelNote":"Repositories handler deletes file content from a branch."},
+    {"name":"push_files","description":"Push files to repository","expectedEffects":["WRITE","EXTERNAL_COMMUNICATION"],"labelNote":"Repositories handler commits files to an external GitHub repository."},
+    {"name":"create_pull_request","description":"Open new pull request","expectedEffects":["WRITE"],"labelNote":"Pull requests handler creates an artifact in GitHub."}
+  ]
+}

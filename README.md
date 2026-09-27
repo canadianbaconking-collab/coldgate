@@ -2,7 +2,7 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.4.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.6.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
@@ -50,9 +50,10 @@ Create `coldgate.project.json` beside your real configuration:
 npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json
 npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --format markdown
 npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --fail-on change
+npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --fail-on selected --categories approval:weakening,boundaries:widening
 ```
 
-The final command deliberately exits 1: the example changes approval, scope, credentials, parameters, and tools. Invalid snapshots exit 2. Unchanged snapshots exit 0. The CLI compares represented claims, including evidence strength, without treating a removed entry as proven revocation. Source-file moves are reported separately as provenance changes.
+The two gated commands deliberately exit 1: the example changes approval, scope, credentials, parameters, and tools. The selective gate fails only on the named directional categories; invalid selectors and snapshots exit 2. Unchanged snapshots exit 0. The CLI compares represented claims, including evidence changes, without treating a removed entry as proven revocation. Source-file moves are reported separately as provenance changes.
 
 See [Coldgate Diff](docs/DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains private and unpublished.
 
@@ -65,6 +66,15 @@ Start-Process .\trace-review.html
 ```
 
 Imports saved OpenAI Agents Python span exports and OTLP/JSON into a chronological capability timeline. Text, JSON, Markdown, and a standalone offline HTML viewer retain recorded outcomes and approval evidence separately from inferred effects. Missing approvals remain UNKNOWN; raw arguments, results, and error details are omitted. See [trace import contracts and limits](docs/TRACE.md). The examples are synthetic; real production exports remain unvalidated.
+
+## Measure evidence depth
+
+```powershell
+npm exec -- coldgate scan examples/connected --format json
+npm run benchmark
+```
+
+Scan reports now retain name, description, and annotation effect signals independently, flag conflicts and unknown authority combined with broad reach, and summarize effect, approval, inventory, and boundary evidence. The benchmark separates development examples from a nine-case holdout: only 1 of 4 consequential effects was found in that holdout, with no false positives among six benign examples. The parser remains deliberately conservative; see [measurement details and limitations](docs/EVIDENCE.md).
 
 ## What is supported
 
@@ -124,6 +134,4 @@ npm exec -- coldgate scan fixtures/adversarial/malformed-tools.json --format sar
 # Expected exit code: 2
 ```
 
-See [CHANGELOG.md](CHANGELOG.md) for checkpoint history and [development roadmap](docs/ROADMAP.md) for Evidence Depth and subsequent checkpoints.
-
-The current suite contains 96 tests. Evidence Depth is in development; see [roadmap](docs/ROADMAP.md). Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).
+See [Evidence Depth](docs/EVIDENCE.md) for source claims, rule semantics, coverage fields, and the separate 28-case benchmark; [Diff semantics](docs/DIFF.md) for the v0.6 directional categories; and the [roadmap](docs/ROADMAP.md) for subsequent integration hardening. Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).

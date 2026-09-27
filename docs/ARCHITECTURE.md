@@ -34,8 +34,10 @@ Coldgate Diff validates only the snapshot contract it consumes. It cannot authen
 
 Adapters copy only allowlisted fields; input/output payloads and error details do not cross the normalization boundary. Rendering operates only on normalized reports. HTML uses escaped text, no JavaScript or remote resources, and a restrictive CSP. The unified CLI dispatches scan, diff, and trace. See [TRACE.md](TRACE.md) for format contracts and limits.
 
-## Evidence Depth checkpoints (0.5 development)
+## Evidence Depth (0.5.0)
 
 `description.ts` recognizes a deliberately small set of leading action phrases without parsing arbitrary prose. The description is declared metadata, while derived effect claims are INFERRED. `effectEvidence` retains independent name, description, and annotation claims, including duplicate effect values from distinct sources. The aggregate effects list deduplicates values while keeping the weaker status and separate evidence claims. Connected catalog descriptions are imported along with standard schemas and annotation hints; client approval remains anchored to native configuration.
 
 `reconcile.ts` projects evidence by source and identifies description disagreements without deciding which source is true. CG007 retains its historical annotation/name meaning, CG012 is the new description conflict, and CG013–CG015 compose uncertainty with declared reach, credential identifiers, or consequential hints. The scan report remains schema 0.1; old snapshot reads remain supported.
+
+`summarizeCoverage()` computes disjoint record counts across four evidence dimensions. Scan reports include optional `coverage` with no schema revision; text format includes an aggregate across input reports. Failed analysis never claims coverage. The benchmark is a separate `npm run benchmark` process over pinned public excerpts and independent handler-derived labels; 19 development cases and nine holdout cases are reported independently. No inference was added after viewing holdout misses. See [EVIDENCE.md](EVIDENCE.md).

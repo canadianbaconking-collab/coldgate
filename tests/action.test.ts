@@ -17,3 +17,14 @@ test('Action runner writes a summary and preserves change/no-change/error exit c
     assert.match(await readFile(join(dir, 'error.md'), 'utf8'), /outside the workspace/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('Action runner passes selected category gate without shell interpolation', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'coldgate-action-selected-'));
+  try {
+    const run = (categories: string, summary: string) => spawnSync(process.execPath, ['.github/actions/coldgate-diff/run.mjs'], { encoding: 'utf8', env: { ...process.env, GITHUB_WORKSPACE: resolve('.'), GITHUB_STEP_SUMMARY: summary, COLDGATE_DIFF_BEFORE: 'examples/diff/before.json', COLDGATE_DIFF_AFTER: 'examples/diff/after.json', COLDGATE_DIFF_FAIL_ON: 'selected', COLDGATE_DIFF_CATEGORIES: categories } });
+    assert.equal(run('approval:weakening', join(dir, 'selected.md')).status, 1);
+    assert.match(await readFile(join(dir, 'selected.md'), 'utf8'), /Category: approval:weakening/);
+    assert.equal(run('approval:strengthening', join(dir, 'ignored.md')).status, 0);
+    assert.equal(run('approval:made-up', join(dir, 'invalid.md')).status, 2);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

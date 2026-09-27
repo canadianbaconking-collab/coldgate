@@ -1,0 +1,7 @@
+{
+  "repository":"microsoft/playwright","commit":"b9a34ac7783a1b6c2e1dfff0c08ac744c048fa59","license":"Apache-2.0",
+  "definition":"packages/playwright-core/src/tools/backend/snapshot.ts","groundTruth":"packages/playwright-core/src/tools/backend/snapshot.ts handler",
+  "cases":[
+    {"name":"browser_snapshot","description":"Capture accessibility snapshot of the current page, this is better than screenshot","expectedEffects":["READ"],"labelNote":"Handler collects the current page accessibility tree."}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "repository":"modelcontextprotocol/servers-archived","commit":"9be4674d1ddf8c469e6461a27a337eeb65f76c2e","license":"MIT",
+  "definition":"src/sqlite/src/mcp_server_sqlite/server.py","groundTruth":"src/sqlite/src/mcp_server_sqlite/server.py handle_call_tool",
+  "cases":[
+    {"name":"append_insight","description":"Add a business insight to the memo","expectedEffects":["WRITE"],"labelNote":"Handler appends an insight to in-memory memo state and notifies listeners."},
+    {"name":"describe_table","description":"Get the schema information for a specific table","expectedEffects":["READ"],"labelNote":"Handler reads SQLite schema via PRAGMA."}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "repository": "modelcontextprotocol/servers-archived",
+  "commit": "9be4674d1ddf8c469e6461a27a337eeb65f76c2e",
+  "license": "MIT",
+  "definition": "src/slack/index.ts",
+  "groundTruth": "src/slack/index.ts call_tool handler",
+  "cases": [
+    {"name":"slack_list_channels","description":"List public or pre-defined channels in the workspace with pagination","expectedEffects":["READ"],"labelNote":"Handler calls Slack conversations.list."},
+    {"name":"slack_post_message","description":"Post a new message to a Slack channel","expectedEffects":["WRITE","EXTERNAL_COMMUNICATION"],"labelNote":"Handler posts externally visible Slack message."},
+    {"name":"slack_add_reaction","description":"Add a reaction emoji to a message","expectedEffects":["WRITE","EXTERNAL_COMMUNICATION"],"labelNote":"Handler mutates Slack reaction state visible to participants."},
+    {"name":"slack_get_channel_history","description":"Get recent messages from a channel","expectedEffects":["READ"],"labelNote":"Handler retrieves Slack channel history."}
+  ]
+}

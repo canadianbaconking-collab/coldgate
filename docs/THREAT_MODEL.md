@@ -45,3 +45,7 @@ The CLI uses bounded reads of regular files, rejects direct symlinks, and never 
 The analyzer treats descriptions as untrusted metadata. It recognizes only positive leading action statements in a limited first clause and returns INFERRED effects; the raw text never enters reports. Quotations, negative or hypothetical wording, and many legitimate descriptions may remain unknown. Anchored patterns can still misread ambiguous prose; neither description nor annotation is proof of implementation behavior.
 
 Separate name, description, and annotation claims remain in `effectEvidence` even when they name the same effect. CG007 continues to address its historical annotation/name contradiction; CG012 explicitly reports new description disagreements. CG013–CG015 report unknown behavior combined with broad boundaries, credential identifiers, or consequential hints. An identifier or wildcard declaration alone does not prove actual privileges or reach. Warnings are review prompts, not danger scores.
+
+## Evidence Depth limitations (0.5.0)
+
+Coverage counts say which claims exist, not whether authority is contained or approval enforced. Mixed sources can conflict; no source wins automatically. Anchored description phrases miss legitimate tools and may still infer a wrong effect from prose. A false negative in the nine-case holdout demonstrates this limit. Corpus labels are selected and source-reviewed, not authenticated live behavior; do not extrapolate its measured rates to production.

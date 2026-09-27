@@ -3,6 +3,7 @@ import { basename, join } from 'node:path';
 import { scanFile } from '../../authority/src/scan.ts';
 import { scanProject } from '../../authority/src/project.ts';
 import type { Report } from '../../authority/src/model.ts';
+import { summarizeCoverage } from '../../authority/src/coverage.ts';
 
 const CANDIDATES = ['coldgate.project.json', 'mcp.json', '.mcp.json', 'claude_desktop_config.json', 'coldgate.json', 'openai-hosted-mcp.json', 'openai-responses.json', 'tools.json'];
 const SUBDIRS = ['', '.cursor', '.vscode', 'fixtures'];
@@ -33,13 +34,22 @@ export function renderText(reports: Report[]): string {
   }
   const records = reports.flatMap(r => r.records), findings = reports.flatMap(r => r.findings);
   lines.push(`Summary: ${records.length} entries; ${records.filter(r => r.inventory.value === 'unknown').length} unknown inventories; ${records.filter(r => r.capability.approval.value === 'REQUIRED').length} explicit required approvals; ${records.filter(r => r.capability.approval.value === 'UNSPECIFIED').length} unspecified approvals; ${findings.filter(f => f.level === 'WARN').length} warnings; ${findings.filter(f => f.level === 'REVIEW').length} reviews.`);
+  if (reports.some(r => r.errors.length)) lines.push('Coverage unavailable: at least one analysis failed.');
+  else {
+    const c = summarizeCoverage(records), e = c.effect, a = c.approval, i = c.inventory, b = c.boundary;
+    lines.push(`Evidence coverage (${c.records} records; not a safety score):`,
+      `  effects: ${e.declaredOnly} declared only; ${e.inferredOnly} inferred only; ${e.mixed} mixed; ${e.observedClaim} observed claims; ${e.enforcedClaim} enforced claims; ${e.unknown} unknown.`,
+      `  approvals: ${a.explicit} explicit; ${a.conditionalInherited} conditional/inherited; ${a.observedClaim} observed claims; ${a.unknown} unknown.`,
+      `  inventory: ${i.snapshot} snapshots; ${i.observedClaim} observed claims; ${i.unknown} unknown.`,
+      `  boundaries: ${b.explicit} explicit; ${b.inferred} inferred; ${b.observedClaim} observed claims; ${b.unknown} unknown.`);
+  }
   lines.push('Static declarations and hints do not prove runtime enforcement.');
   return lines.join('\n') + '\n';
 }
 function renderSarif(reports: Report[]): object {
   const all = reports.flatMap(report => report.findings.map(finding => ({ report, finding })));
   return { version: '2.1.0', $schema: 'https://json.schemastore.org/sarif-2.1.0.json', runs: [{
-    tool: { driver: { name: 'Coldgate Scan', version: '0.4.0', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
+    tool: { driver: { name: 'Coldgate Scan', version: '0.6.0', rules: [...new Set(all.map(x => x.finding.rule))].sort().map(id => ({ id })) } },
     invocations: [{ executionSuccessful: !reports.some(r => r.errors.length),
       toolExecutionNotifications: reports.flatMap(r => r.errors.map(message => ({ level: 'error', message: { text: `${r.source}: ${message}` } }))) }],
     results: all.map(({ report, finding }) => ({ ruleId: finding.rule, level: finding.level === 'WARN' ? 'warning' : 'note',

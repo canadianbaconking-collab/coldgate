@@ -1,0 +1,12 @@
+{
+  "repository": "modelcontextprotocol/servers-archived",
+  "commit": "9be4674d1ddf8c469e6461a27a337eeb65f76c2e",
+  "license": "MIT",
+  "definition": "src/sqlite/src/mcp_server_sqlite/server.py",
+  "groundTruth": "src/sqlite/src/mcp_server_sqlite/server.py handle_call_tool",
+  "cases": [
+    {"name":"read_query","description":"Execute a SELECT query on the SQLite database","expectedEffects":["READ"],"labelNote":"Handler accepts only a SELECT-leading query. Does not claim arbitrary SQL query semantics."},
+    {"name":"write_query","description":"Execute an INSERT, UPDATE, or DELETE query on the SQLite database","expectedEffects":["WRITE","DESTRUCTIVE"],"labelNote":"Handler executes SQL other than SELECT; DELETE is permitted."},
+    {"name":"create_table","description":"Create a new table in the SQLite database","expectedEffects":["WRITE"],"labelNote":"Handler executes CREATE TABLE statements."}
+  ]
+}

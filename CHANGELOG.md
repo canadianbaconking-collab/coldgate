@@ -1,11 +1,20 @@
 # Changelog
 
-## Unreleased — Evidence Depth
+## 0.6.0 — Authority change semantics
+
+- Add directional `category` labels to each Diff change without changing existing change kinds or schema-0.1 snapshot compatibility.
+- Separate known effect changes, approval weakening/strengthening, exact wildcard boundary changes, identifiers/scopes, finite parameter restrictions, inventory exposure, uncertainty and evidence changes.
+- Add `--fail-on selected --categories ...` and the corresponding composite Action input for an exact, deterministic CI gate; preserve `--fail-on change` and invalid-input exit 2.
+- Update review output, examples, docs and regression tests; 103 tests pass locally. These are comparisons of represented claims, not verified runtime privilege or enforcement.
+
+## 0.5.0 — Evidence Depth
 
 - Infer a conservative set of effects from leading tool description statements, keeping description, name, and annotation claims separate.
 - Preserve CG007 meaning; add CG012 description disagreement and CG013–CG015 composition reviews for unknown effects and consequential hints.
 - Validate description length, import connected catalog descriptions, and retain old report schema 0.1.
-- Real labeled benchmark and dimension coverage are in progress; no release claimed yet.
+- Add a separately runnable 28-case pinned public corpus across five categories, split into development (19) and untouched holdout (9). Holdout consequential-effect recall is 1/4; benign false positives 0/6; no independent contradiction cases are labeled.
+- Add separate effect, approval, inventory, and boundary evidence coverage counts to text and schema-0.1 JSON reports. Older saved snapshots remain readable.
+- Add Evidence Depth guide and roadmap; 98 tests pass locally. Real trace export/hosted Action verification remains unverified.
 
 ## 0.4.0 — Coldgate Trace
 

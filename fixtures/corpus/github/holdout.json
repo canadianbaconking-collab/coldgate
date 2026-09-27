@@ -1,0 +1,7 @@
+{
+  "repository":"github/github-mcp-server","commit":"85598ba6e1256f7ebf4867b95d63b833c4549264","license":"MIT",
+  "definition":"README.md","groundTruth":"pkg/github/search.go",
+  "cases":[
+    {"name":"search_code","description":"Search code","expectedEffects":["READ"],"labelNote":"Handler searches indexed code using the GitHub API."}
+  ]
+}

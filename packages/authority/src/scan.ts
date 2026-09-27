@@ -3,6 +3,7 @@ import { basename } from 'node:path';
 import type { Approval, AuthorityRecord, Boundary, Capability, Claim, Effect, Report } from './model.ts';
 import { parameterSurface } from './parameters.ts';
 import { inferDescriptionEffects } from './description.ts';
+import { summarizeCoverage } from './coverage.ts';
 import { assess } from './rules.ts';
 import { validateInput } from './validate.ts';
 
@@ -166,6 +167,7 @@ export function scanConfig(input: unknown, source = 'input.json'): Report {
     }
   } else report.errors.push('Unsupported JSON: expected tools, hostedMcpTools, mcpServers, or servers');
   if (report.errors.length) { report.records = []; report.findings = []; }
+  else report.coverage = summarizeCoverage(report.records);
   return report;
 }
 export async function scanFile(file: string): Promise<Report> {

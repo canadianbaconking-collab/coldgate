@@ -15,7 +15,9 @@ try {
     paths.push(file);
   }
   const capture = { write(s) { report += s; return true; } };
-  code = await main([...paths, '--format', 'markdown', '--fail-on', process.env.COLDGATE_DIFF_FAIL_ON ?? 'change'], capture, capture);
+  const failOn = process.env.COLDGATE_DIFF_FAIL_ON ?? 'change';
+  const categories = process.env.COLDGATE_DIFF_CATEGORIES ?? '';
+  code = await main([...paths, '--format', 'markdown', '--fail-on', failOn, ...(failOn === 'selected' || categories ? ['--categories', categories] : [])], capture, capture);
 } catch { report = '## Coldgate — Diff\n\nERROR: Missing or unreadable snapshot, or input outside the workspace.\n'; }
 if (process.env.GITHUB_STEP_SUMMARY) {
   // GitHub job summaries are limited to 1 MiB. Avoid invalid/truncated multi-byte boundaries.

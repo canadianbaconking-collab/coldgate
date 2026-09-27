@@ -39,4 +39,9 @@ tools.json (mcp-tools-snapshot)
       Missing: Effective scope and enforcement behavior.
 
 Summary: 4 entries; 0 unknown inventories; 0 explicit required approvals; 4 unspecified approvals; 2 warnings; 3 reviews.
+Evidence coverage (4 records; not a safety score):
+  effects: 0 declared only; 0 inferred only; 3 mixed; 0 observed claims; 0 enforced claims; 1 unknown.
+  approvals: 0 explicit; 0 conditional/inherited; 0 observed claims; 4 unknown.
+  inventory: 4 snapshots; 0 observed claims; 0 unknown.
+  boundaries: 1 explicit; 0 inferred; 0 observed claims; 3 unknown.
 Static declarations and hints do not prove runtime enforcement.

@@ -1,0 +1,15 @@
+{
+  "repository": "modelcontextprotocol/servers",
+  "commit": "f46d9578190b476b3501923ea8977d899e8db2cb",
+  "license": "MIT / Apache-2.0 transition (see pinned LICENSE)",
+  "definition": "src/filesystem/index.ts",
+  "groundTruth": "src/filesystem/index.ts and src/filesystem/lib.ts handlers",
+  "cases": [
+    {"name":"read_text_file","description":"Read the complete contents of a file from the file system as text.","annotations":{"readOnlyHint":true,"openWorldHint":false},"expectedEffects":["READ"],"labelNote":"Handler reads file content within allowed directories."},
+    {"name":"directory_tree","description":"Get a recursive tree view of files and directories as a JSON structure.","expectedEffects":["READ"],"labelNote":"Handler reads directory metadata to construct a tree."},
+    {"name":"write_file","description":"Create a new file or completely overwrite an existing file with new content.","expectedEffects":["WRITE","DESTRUCTIVE"],"labelNote":"Handler can replace existing file content."},
+    {"name":"move_file","description":"Move or rename files and directories.","expectedEffects":["WRITE"],"labelNote":"Handler changes filesystem paths."},
+    {"name":"edit_file","description":"Make line-based edits to a text file.","expectedEffects":["WRITE"],"labelNote":"Handler applies edits and writes changed text."},
+    {"name":"list_directory","description":"Get a detailed listing of all files and directories in a specified path.","expectedEffects":["READ"],"labelNote":"Handler lists directory entries."}
+  ]
+}

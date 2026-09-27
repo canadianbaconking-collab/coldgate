@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { scanConfig, inferDescriptionEffects, scanProject } from '../packages/authority/src/index.ts';
+import { scanConfig, inferDescriptionEffects, scanProject, summarizeCoverage } from '../packages/authority/src/index.ts';
 
 test('description-derived effect is INFERRED and independently sourced', () => {
   const r = scanConfig({tools: [{name: 'read_branch', description: 'Permanently deletes matching branches', annotations: {readOnlyHint: true}}]});
@@ -27,6 +27,8 @@ test('negations, quotations, capability claims, and examples do not produce an a
   ]) assert.ok(!inferDescriptionEffects(description).includes('DESTRUCTIVE'), description);
   assert.deepEqual(inferDescriptionEffects('Lists files without modifying or deleting them.'), ['READ']);
   assert.deepEqual(inferDescriptionEffects('This tool sends messages to the team.'), ['WRITE', 'EXTERNAL_COMMUNICATION']);
+  assert.deepEqual(inferDescriptionEffects('Execute a SELECT query on the SQLite database'), ['READ']);
+  assert.deepEqual(inferDescriptionEffects('Execute an INSERT, UPDATE, or DELETE query on the SQLite database'), ['WRITE', 'DESTRUCTIVE']);
 });
 
 test('description validates type and size without echoing content', () => {
@@ -49,8 +51,26 @@ test('connected catalogs propagate description provenance without trusting catal
     assert.deepEqual(report.errors, []);
     const c = report.records[0].capability;
     assert.equal(c.approval.value, 'REQUIRED');
+    assert.equal(report.coverage?.approval.explicit, 1);
     assert.ok(c.effectEvidence.some(e => e.value === 'DESTRUCTIVE' && e.source.startsWith('catalog.json:') && e.source.endsWith('.description')));
   } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('coverage dimensions use disjoint counts and expose unknowns, not safety', () => {
+  const report = scanConfig({mcpServers: {server: {tools: [
+    {name: 'list_records', description: 'List records.', annotations: {readOnlyHint: true}, requiresApproval: true, repositories: ['*']},
+    {name: 'opaque', description: 'For example, this tool could delete records.'},
+  ]}}});
+  assert.deepEqual(report.errors, []);
+  const c = report.coverage!;
+  assert.equal(c.records, 2);
+  for (const key of ['effect', 'approval', 'inventory', 'boundary'] as const) assert.equal(Object.values(c[key]).reduce((a, b) => a + b, 0), c.records);
+  assert.equal(c.effect.mixed, 1); assert.equal(c.effect.unknown, 1);
+  assert.equal(c.approval.explicit, 1); assert.equal(c.approval.unknown, 1);
+  assert.equal(c.inventory.snapshot, 2);
+  assert.equal(c.boundary.explicit, 1); assert.equal(c.boundary.unknown, 1);
+  assert.deepEqual(summarizeCoverage(report.records), c);
+  assert.ok(!JSON.stringify(report).includes('For example, this tool could delete records.'));
 });
 
 test('CG007 keeps its name-and-annotation meaning while CG012 reconciles description disagreement', () => {

@@ -49,4 +49,9 @@ coldgate.project.json (connected-openai-responses-mcp)
       Missing: Explicit allowed resources or independent enforcement evidence.
 
 Summary: 4 entries; 0 unknown inventories; 3 explicit required approvals; 0 unspecified approvals; 0 warnings; 3 reviews.
+Evidence coverage (4 records; not a safety score):
+  effects: 0 declared only; 0 inferred only; 4 mixed; 0 observed claims; 0 enforced claims; 0 unknown.
+  approvals: 4 explicit; 0 conditional/inherited; 0 observed claims; 0 unknown.
+  inventory: 4 snapshots; 0 observed claims; 0 unknown.
+  boundaries: 0 explicit; 0 inferred; 0 observed claims; 4 unknown.
 Static declarations and hints do not prove runtime enforcement.

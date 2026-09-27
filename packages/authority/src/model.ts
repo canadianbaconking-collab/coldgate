@@ -29,4 +29,12 @@ export interface Finding {
   observed: string; inferred: string; reason: string; missing: string; evidence: string[];
 }
 export interface InventoryConnection { provider: string; configSource: string; catalogSource: string; sha256: string; listed: number; included: number; excluded: number; missing: number; selectionConditional: boolean; }
-export interface Report { connections?: InventoryConnection[]; schemaVersion: '0.1'; source: string; format: string; records: AuthorityRecord[]; findings: Finding[]; errors: string[]; }
+/** Disjoint counts per dimension. They measure evidence presence, not safety. */
+export interface Coverage {
+  records: number;
+  effect: { declaredOnly: number; inferredOnly: number; mixed: number; observedClaim: number; enforcedClaim: number; unknown: number };
+  approval: { explicit: number; conditionalInherited: number; observedClaim: number; unknown: number };
+  inventory: { snapshot: number; observedClaim: number; unknown: number };
+  boundary: { explicit: number; inferred: number; observedClaim: number; unknown: number };
+}
+export interface Report { coverage?: Coverage; connections?: InventoryConnection[]; schemaVersion: '0.1'; source: string; format: string; records: AuthorityRecord[]; findings: Finding[]; errors: string[]; }

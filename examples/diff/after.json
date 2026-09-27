@@ -33,8 +33,8 @@
               "WRITE",
               "DESTRUCTIVE"
             ],
-            "status": "DECLARED",
-            "source": "mcpServers.repository.tools.create_issue.annotations",
+            "status": "INFERRED",
+            "source": "mcpServers.repository.tools.create_issue.annotations + mcpServers.repository.tools.create_issue.name",
             "explanation": "Aggregate status is no stronger than its weakest member; see effectEvidence"
           },
           "effectEvidence": [
@@ -49,6 +49,12 @@
               "status": "DECLARED",
               "source": "mcpServers.repository.tools.create_issue.annotations",
               "explanation": "Untrusted MCP descriptive hint"
+            },
+            {
+              "value": "WRITE",
+              "status": "INFERRED",
+              "source": "mcpServers.repository.tools.create_issue.name",
+              "explanation": "Hypothesis from operation name"
             }
           ],
           "boundaries": [
@@ -228,11 +234,11 @@
         "level": "WARN",
         "recordId": "repository.create_issue",
         "observed": "Approval is NOT_REQUIRED (DECLARED).",
-        "inferred": "Potential WRITE, DESTRUCTIVE from declared evidence.",
+        "inferred": "Potential WRITE, DESTRUCTIVE from inferred evidence.",
         "reason": "A consequential operation may run without a confirmed approval boundary.",
         "missing": "Effective approval behavior and an explicit policy for this operation.",
         "evidence": [
-          "mcpServers.repository.tools.create_issue.annotations",
+          "mcpServers.repository.tools.create_issue.annotations + mcpServers.repository.tools.create_issue.name",
           "mcpServers.repository.tools.create_issue.requiresApproval"
         ]
       },
@@ -274,6 +280,34 @@
         ]
       }
     ],
-    "errors": []
+    "errors": [],
+    "coverage": {
+      "records": 2,
+      "effect": {
+        "declaredOnly": 0,
+        "inferredOnly": 0,
+        "mixed": 2,
+        "observedClaim": 0,
+        "enforcedClaim": 0,
+        "unknown": 0
+      },
+      "approval": {
+        "explicit": 2,
+        "conditionalInherited": 0,
+        "observedClaim": 0,
+        "unknown": 0
+      },
+      "inventory": {
+        "snapshot": 2,
+        "observedClaim": 0,
+        "unknown": 0
+      },
+      "boundary": {
+        "explicit": 1,
+        "inferred": 0,
+        "observedClaim": 0,
+        "unknown": 1
+      }
+    }
   }
 ]
