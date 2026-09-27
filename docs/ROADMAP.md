@@ -19,11 +19,11 @@ No new configuration adapters during Evidence Depth. Supported old report schema
 
 Categorize represented expansions/contractions, approval weakening/strengthening, boundary widening/narrowing, credentials/scopes, consequential effects, inventory exposure, uncertainty, and evidence strength separately. Directional labels describe represented claims only. Add a deterministic CI gate for selected change categories; no total risk score or claimed runtime revocation. Keep `--fail-on change` compatible.
 
-Diff now adds `category` labels, a selected category CLI/Action gate, and an explicit uncertainty change. `--fail-on change` retains its prior any-change behavior; unsupported selectors return exit 2. See [Diff semantics](DIFF.md). A hosted Action run remains unverified.
+Diff now adds `category` labels, a selected category CLI/Action gate, and an explicit uncertainty change. `--fail-on change` retains its prior any-change behavior; unsupported selectors return exit 2. See [Diff semantics](DIFF.md). The hosted Action gate passed in the [0.7.0 integration run](https://github.com/canadianbaconking-collab/coldgate/actions/runs/36349044210).
 
 ## Integration hardening
 
-The root package builds a small JavaScript tarball and verifies an isolated offline install of all three CLI commands. Individual source workspaces remain private and are not installable tarballs. The `integration-smoke` workflow tests Node 22.18 and 24 and runs the composite Action on GitHub-hosted runners. An [external pull request example](../examples/github-actions/coldgate-diff.yml) pins a trusted Coldgate commit and compares separately scanned base/candidate configurations. Preserve untrusted PR and secret boundaries. npm publication remains a separate decision; the existing public repository's visibility is unchanged.
+The root package builds a small JavaScript tarball and verifies an isolated offline install of all three CLI commands. Individual source workspaces remain private and are not installable tarballs. The [integration smoke run](https://github.com/canadianbaconking-collab/coldgate/actions/runs/36349044210) passed package checks on Node 22.18 and 24 and the composite Action gate on a hosted runner. An [external pull request example](../examples/github-actions/coldgate-diff.yml) pins a trusted Coldgate commit and compares separately scanned base/candidate configurations; it has not been exercised in an independent repository. Preserve untrusted PR and secret boundaries. npm publication remains a separate decision; the existing public repository's visibility is unchanged.
 
 ## Decision gate
 

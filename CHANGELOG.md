@@ -5,6 +5,7 @@
 - Build a single JavaScript root tarball using Node's type stripping API. Verify pack contents and install scan, diff, and trace in an isolated offline consumer; keep the individual workspace packages private and unpublished.
 - Add a pinned, read-only GitHub Actions integration smoke workflow and a pull request example that scans protected base and candidate configurations with trusted Coldgate code.
 - Correct repository visibility documentation and clarify that a successful static comparison does not establish runtime authority or enforcement.
+- Verify the package on hosted Node 22.18 and 24 and the selected/unselected composite Action gates in [integration run 36349044210](https://github.com/canadianbaconking-collab/coldgate/actions/runs/36349044210); external-repository execution remains unverified.
 
 ## 0.6.0 — Authority change semantics
 
