@@ -124,6 +124,6 @@ npm exec -- coldgate scan fixtures/adversarial/malformed-tools.json --format sar
 # Expected exit code: 2
 ```
 
-See [CHANGELOG.md](CHANGELOG.md) for checkpoint history.
+See [CHANGELOG.md](CHANGELOG.md) for checkpoint history and [development roadmap](docs/ROADMAP.md) for Evidence Depth and subsequent checkpoints.
 
 The current suite contains 90 tests. Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).
