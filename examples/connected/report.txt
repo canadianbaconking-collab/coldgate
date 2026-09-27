@@ -7,37 +7,37 @@ coldgate.project.json (connected-openai-responses-mcp)
   Connected research: responses.json + catalogs/research.tools.json
     inventory: 1 listed; 1 selected; 0 excluded; 0 configured names missing
     catalog sha256: 8596b91a3af2e4ae64764f809518e15fee0630b6711a39aff8c19b25fb4d4963
-  repository.create_issue | WRITE [DECLARED] | approval REQUIRED [DECLARED]
+  repository.create_issue | WRITE [INFERRED] | approval REQUIRED [DECLARED]
     selection: INCLUDED [DECLARED]
     scope: unknown:unknown [UNKNOWN]
-    evidence: effects=catalogs/repository.tools.json:tools.create_issue.annotations; approval=responses.json:tools[0].require_approval.always.tool_names
+    evidence: effects=catalogs/repository.tools.json:tools.create_issue.annotations + catalogs/repository.tools.json:tools.create_issue.name; approval=responses.json:tools[0].require_approval.always.tool_names
     INFO CG005: Approval is explicitly configured as required.
       Inference: None. Why: Static configuration does not prove runtime enforcement or a human reviewer.
       Missing: Runtime enforcement evidence.
     REVIEW CG008: No supported resource boundary was found.
       Inference: Scope may be broad. Why: Tool reach cannot be determined from this static input.
       Missing: Explicit allowed resources or independent enforcement evidence.
-  repository.delete_issue | WRITE, DESTRUCTIVE [DECLARED] | approval REQUIRED [DECLARED]
+  repository.delete_issue | WRITE, DESTRUCTIVE [INFERRED] | approval REQUIRED [DECLARED]
     selection: INCLUDED [DECLARED]
     scope: unknown:unknown [UNKNOWN]
-    evidence: effects=catalogs/repository.tools.json:tools.delete_issue.annotations; approval=responses.json:tools[0].require_approval.always.tool_names
+    evidence: effects=catalogs/repository.tools.json:tools.delete_issue.annotations + catalogs/repository.tools.json:tools.delete_issue.name; approval=responses.json:tools[0].require_approval.always.tool_names
     INFO CG005: Approval is explicitly configured as required.
       Inference: None. Why: Static configuration does not prove runtime enforcement or a human reviewer.
       Missing: Runtime enforcement evidence.
     REVIEW CG008: No supported resource boundary was found.
       Inference: Scope may be broad. Why: Tool reach cannot be determined from this static input.
       Missing: Explicit allowed resources or independent enforcement evidence.
-  repository.list_issues | READ [DECLARED] | approval NOT_REQUIRED [DECLARED]
+  repository.list_issues | READ [INFERRED] | approval NOT_REQUIRED [DECLARED]
     selection: INCLUDED [DECLARED]
     scope: unknown:unknown [UNKNOWN]
-    evidence: effects=catalogs/repository.tools.json:tools.list_issues.annotations; approval=responses.json:tools[0].require_approval.never.tool_names
+    evidence: effects=catalogs/repository.tools.json:tools.list_issues.annotations + catalogs/repository.tools.json:tools.list_issues.name; approval=responses.json:tools[0].require_approval.never.tool_names
     INFO CG006: MCP readOnlyHint=true.
       Inference: Tool declares read-only behavior. Why: An MCP annotation is an untrusted descriptive hint.
       Missing: Implementation or observed behavior to establish read-only operation.
-  research.search | READ, OPEN_WORLD [DECLARED] | approval REQUIRED [DECLARED]
+  research.search | READ, OPEN_WORLD [INFERRED] | approval REQUIRED [DECLARED]
     selection: INCLUDED [INFERRED]
     scope: unknown:unknown [UNKNOWN]
-    evidence: effects=catalogs/research.tools.json:tools.search.annotations; approval=responses.json:tools[1].require_approval
+    evidence: effects=catalogs/research.tools.json:tools.search.annotations + catalogs/research.tools.json:tools.search.name; approval=responses.json:tools[1].require_approval
     INFO CG005: Approval is explicitly configured as required.
       Inference: None. Why: Static configuration does not prove runtime enforcement or a human reviewer.
       Missing: Runtime enforcement evidence.

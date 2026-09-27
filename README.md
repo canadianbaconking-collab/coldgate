@@ -126,4 +126,4 @@ npm exec -- coldgate scan fixtures/adversarial/malformed-tools.json --format sar
 
 See [CHANGELOG.md](CHANGELOG.md) for checkpoint history and [development roadmap](docs/ROADMAP.md) for Evidence Depth and subsequent checkpoints.
 
-The current suite contains 90 tests. Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).
+The current suite contains 96 tests. Evidence Depth is in development; see [roadmap](docs/ROADMAP.md). Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Evidence Depth
+
+- Infer a conservative set of effects from leading tool description statements, keeping description, name, and annotation claims separate.
+- Preserve CG007 meaning; add CG012 description disagreement and CG013–CG015 composition reviews for unknown effects and consequential hints.
+- Validate description length, import connected catalog descriptions, and retain old report schema 0.1.
+- Real labeled benchmark and dimension coverage are in progress; no release claimed yet.
+
 ## 0.4.0 — Coldgate Trace
 
 - Add `@coldgate/trace` and `coldgate trace` for saved OpenAI Agents Python span exports and OTLP/JSON.

@@ -37,6 +37,7 @@ export function validateInput(input: unknown): string[] {
       else if (seen.has(name)) fail(locator, 'duplicates a tool name');
       else seen.add(name);
       if (key !== undefined && owns(value, 'name') && value.name !== key) fail(locator, 'has a name different from its map key');
+      if (owns(value, 'description') && (typeof value.description !== 'string' || value.description.length > 4096)) fail(`${locator}.description`, 'must be a string of at most 4096 characters');
       overlay(value, locator);
       if (owns(value, 'inputSchema')) {
         if (!obj(value.inputSchema)) fail(`${locator}.inputSchema`, 'must be a JSON Schema object');

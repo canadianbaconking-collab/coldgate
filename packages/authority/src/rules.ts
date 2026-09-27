@@ -1,8 +1,10 @@
 import type { AuthorityRecord, Finding } from './model.ts';
+import { effectSignals, reconcileEffects } from './reconcile.ts';
 
 /** Small ordered rules. Each finding separates observation, inference, and missing evidence. */
 export function assess(record: AuthorityRecord): Finding[] {
   const { effects, approval, annotations, boundaries } = record.capability;
+  const signals = effectSignals(record);
   const result: Finding[] = [];
   const add = (rule: string, level: Finding['level'], observed: string, inferred: string, reason: string, missing: string, evidence: string[]) =>
     result.push({ rule, level, recordId: record.id, observed, inferred, reason, missing, evidence });
@@ -16,8 +18,15 @@ export function assess(record: AuthorityRecord): Finding[] {
   if (approval.value === 'INHERITED' || approval.value === 'CONDITIONAL') add('CG004', 'REVIEW', `Approval is ${approval.value} (${approval.status}).`, 'Effective per-tool behavior is unresolved.', 'An inherited or conditional declaration cannot prove a particular call will pause.', 'Resolved rule and enforcement evidence.', [approval.source]);
   if (approval.value === 'REQUIRED') add('CG005', 'INFO', 'Approval is explicitly configured as required.', 'None.', 'Static configuration does not prove runtime enforcement or a human reviewer.', 'Runtime enforcement evidence.', [approval.source]);
   if (annotations.readOnlyHint === true) add('CG006', 'INFO', 'MCP readOnlyHint=true.', 'Tool declares read-only behavior.', 'An MCP annotation is an untrusted descriptive hint.', 'Implementation or observed behavior to establish read-only operation.', [effects.source]);
-  if (annotations.readOnlyHint === true && (annotations.destructiveHint === true || effects.value.includes('DESTRUCTIVE') || effects.value.includes('WRITE'))) add('CG007', 'REVIEW', 'Read-only hint conflicts with destructive hint or name-derived write effect.', 'Effect metadata may be contradictory.', 'Do not discard either signal until verified.', 'Independent behavior evidence.', [effects.source]);
+  if (annotations.readOnlyHint === true && (annotations.destructiveHint === true || signals.name.some(c => c.value === 'WRITE' || c.value === 'DESTRUCTIVE'))) add('CG007', 'REVIEW', 'Read-only hint conflicts with destructive hint or name-derived write effect.', 'Effect metadata may be contradictory.', 'Do not discard either signal until verified.', 'Independent behavior evidence.', [effects.source]);
   if (consequential && boundaries.every(b => b.kind === 'unknown')) add('CG008', 'REVIEW', 'No supported resource boundary was found.', 'Scope may be broad.', 'Tool reach cannot be determined from this static input.', 'Explicit allowed resources or independent enforcement evidence.', boundaries.map(b => b.claim.source));
   if (boundaries.some(b => b.value === '*')) add('CG009', 'REVIEW', 'A declared resource boundary contains *.', 'Scope could include arbitrary resources.', 'Wildcard scope is wider than a named resource.', 'Effective scope and enforcement behavior.', boundaries.map(b => b.claim.source));
+  for (const conflict of reconcileEffects(record)) add('CG012', 'REVIEW', 'Independent tool evidence disagrees.', 'The real effect remains unverified.', conflict.reason, 'Implementation or authenticated runtime evidence.', conflict.sources);
+  const unknownEffect = effects.value.includes('UNKNOWN');
+  const broad = boundaries.filter(b => b.value === '*' || b.kind === 'arbitrary_network' || b.kind === 'arbitrary_filesystem');
+  if (unknownEffect && broad.length) add('CG013', broad.some(b => b.kind === 'arbitrary_network' || b.kind === 'arbitrary_filesystem') ? 'WARN' : 'REVIEW', 'Tool effect is UNKNOWN and a broad boundary is declared.', 'Potential reach is large, but behavior is unknown.', 'A wildcard or arbitrary resource declaration does not prove actual access.', 'Tool behavior and effective resource enforcement.', [effects.source, ...broad.map(b => b.claim.source)]);
+  const credentials = [record.capability.credentialNames, record.capability.scopes].filter(c => c.value.length);
+  if (unknownEffect && credentials.length) add('CG014', 'REVIEW', 'Tool effect is UNKNOWN and credential or scope identifiers are present.', 'The tool could exercise authority not explained by its name.', 'Identifiers do not establish actual privileges or credential use.', 'Tool behavior, effective credential permissions, and runtime evidence.', [effects.source, ...credentials.map(c => c.source)]);
+  if (!signals.name.length && !signals.description.length && (annotations.destructiveHint === true || annotations.openWorldHint === true || annotations.readOnlyHint === false)) add('CG015', 'REVIEW', 'Consequential annotation with no recognized operation evidence.', 'The hint suggests an effect, but the actual operation remains uncharacterized.', 'Untrusted hints alone cannot establish tool behavior.', 'Implementation or authenticated runtime evidence.', signals.annotations.map(c => c.source));
   return result;
 }

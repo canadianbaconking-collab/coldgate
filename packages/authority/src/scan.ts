@@ -2,6 +2,7 @@ import { lstat, readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import type { Approval, AuthorityRecord, Boundary, Capability, Claim, Effect, Report } from './model.ts';
 import { parameterSurface } from './parameters.ts';
+import { inferDescriptionEffects } from './description.ts';
 import { assess } from './rules.ts';
 import { validateInput } from './validate.ts';
 
@@ -43,6 +44,7 @@ function annotations(tool: Record<string, unknown>): Capability['annotations'] {
 }
 function effectEvidence(tool: Record<string, unknown>, name: string, path: string): Claim<Effect>[] {
   const nameEffects = inferEffects(name);
+  const descriptionEffects = typeof tool.description === 'string' ? inferDescriptionEffects(tool.description) : [];
   const h = annotations(tool);
   const hinted: Effect[] = [];
   if (h.readOnlyHint === true) hinted.push('READ');
@@ -50,7 +52,9 @@ function effectEvidence(tool: Record<string, unknown>, name: string, path: strin
   if (h.destructiveHint === true) hinted.push('WRITE', 'DESTRUCTIVE');
   if (h.openWorldHint === true) hinted.push('OPEN_WORLD');
   const result = [...new Set(hinted)].map(e => declared(e, `${path}.annotations`, 'Untrusted MCP descriptive hint'));
-  for (const e of nameEffects) if (!hinted.includes(e) && !(e === 'UNKNOWN' && hinted.length)) result.push(e === 'UNKNOWN' ? unknown(e, path) : claim(e, 'INFERRED', `${path}.name`, 'Hypothesis from operation name'));
+  for (const e of nameEffects) if (e !== 'UNKNOWN') result.push(claim(e, 'INFERRED', `${path}.name`, 'Hypothesis from operation name'));
+  for (const e of descriptionEffects) result.push(claim(e, 'INFERRED', `${path}.description`, 'Hypothesis from tool description'));
+  if (!result.length) result.push(unknown('UNKNOWN', path));
   return result;
 }
 function boundaries(tool: Record<string, unknown>, server: Record<string, unknown>, path: string, serverPath: string): Boundary[] {
@@ -96,7 +100,7 @@ function normalize(provider: string, name: string, tool: Record<string, unknown>
     capability: {
       provider: safe(provider), operation: safe(name),
       parameters: parameterSurface(tool.inputSchema, `${path}.inputSchema`),
-      effects: claim(evidence.map(e => e.value), aggregateStatus, [...new Set(evidence.map(e => e.source))].join(' + '), 'Aggregate status is no stronger than its weakest member; see effectEvidence'),
+      effects: claim([...new Set(evidence.map(e => e.value))], aggregateStatus, [...new Set(evidence.map(e => e.source))].join(' + '), 'Aggregate status is no stronger than its weakest member; see effectEvidence'),
       effectEvidence: evidence,
       boundaries: boundaries(tool, server, path, serverPath), destination: unknown('unknown', path),
       credentialNames: envNames.length ? declared(envNames, `${serverPath}.env keys`) : unknown([], serverPath),
