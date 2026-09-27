@@ -27,3 +27,9 @@ Reports add optional `connections` metadata and optional per-record `selection` 
 The authority model gains optional `parameters`, a declared canonical input-schema fingerprint plus names of top-level properties with `enum` or `const`. A removed finite restriction is a review hint, not a general JSON Schema widening proof. Reordered object keys leave the fingerprint unchanged; other syntactic changes may still be semantically equivalent. Older reports without this optional claim remain valid and produce a not-recorded-to-recorded change when compared with new ones.
 
 Coldgate Diff validates only the snapshot contract it consumes. It cannot authenticate claimed OBSERVED/ENFORCED evidence. The Action wrapper runs the same CLI, takes snapshot paths through environment variables, checks workspace containment, and writes escaped Markdown to the job summary.
+
+## Coldgate Trace (0.4.0)
+
+`packages/trace` imports saved Python SDK span objects and OTLP/JSON into a distinct `TraceReport`. Events reuse `Claim<T>` and `Effect`, preserving imported OBSERVED assertions separately from INFERRED effects and UNKNOWN missing evidence. No control is reported ENFORCED. Parent IDs are scoped to trace IDs; missing parents warn and cycles fail. Timestamps retain decimal-string nanoseconds for exact ordering.
+
+Adapters copy only allowlisted fields; input/output payloads and error details do not cross the normalization boundary. Rendering operates only on normalized reports. HTML uses escaped text, no JavaScript or remote resources, and a restrictive CSP. The unified CLI dispatches scan, diff, and trace. See [TRACE.md](TRACE.md) for format contracts and limits.

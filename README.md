@@ -2,7 +2,7 @@
 
 **Trust deliberately. Enforce predictably. Keep systems understandable.**
 
-Coldgate v0.3.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, and `coldgate diff` for comparing saved reports. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
+Coldgate v0.4.0 contains `@coldgate/authority`, a reusable TypeScript authority record, `coldgate scan`, a local static analysis CLI, `coldgate diff` for comparing saved reports, and `coldgate trace` for reviewing saved execution telemetry. It shows what a configuration declares, what a tool name suggests, and what remains unknown. It never calls an MCP server, runs its command, uploads configuration, or uses an LLM. There is no account or telemetry.
 
 ## Install and run (PowerShell)
 
@@ -55,6 +55,16 @@ npm exec -- coldgate diff examples/diff/before.json examples/diff/after.json --f
 The final command deliberately exits 1: the example changes approval, scope, credentials, parameters, and tools. Invalid snapshots exit 2. Unchanged snapshots exit 0. The CLI compares represented claims, including evidence strength, without treating a removed entry as proven revocation. Source-file moves are reported separately as provenance changes.
 
 See [Coldgate Diff](docs/DIFF.md) for snapshot generation, JSON/SARIF output, and the GitHub Action. The action writes a job summary; Markdown is also ready for human PR review. No PR comment is posted automatically. The package remains private and unpublished.
+
+## Review recorded capability use
+
+```powershell
+npm exec -- coldgate trace examples/trace/openai.json
+npm exec -- coldgate trace examples/trace/otlp.json --format html --output trace-review.html
+Start-Process .\trace-review.html
+```
+
+Imports saved OpenAI Agents Python span exports and OTLP/JSON into a chronological capability timeline. Text, JSON, Markdown, and a standalone offline HTML viewer retain recorded outcomes and approval evidence separately from inferred effects. Missing approvals remain UNKNOWN; raw arguments, results, and error details are omitted. See [trace import contracts and limits](docs/TRACE.md). The examples are synthetic; real production exports remain unvalidated.
 
 ## What is supported
 
@@ -116,4 +126,4 @@ npm exec -- coldgate scan fixtures/adversarial/malformed-tools.json --format sar
 
 See [CHANGELOG.md](CHANGELOG.md) for checkpoint history.
 
-The current suite contains 61 tests. Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).
+The current suite contains 90 tests. Checkpoint history and narrower limitations are recorded in [CHANGELOG.md](CHANGELOG.md).

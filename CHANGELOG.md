@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased — Coldgate naming
+## 0.4.0 — Coldgate Trace
+
+- Add `@coldgate/trace` and `coldgate trace` for saved OpenAI Agents Python span exports and OTLP/JSON.
+- Normalize tool, HTTP client, MCP resource-read, and explicit approval records into a chronological evidence model. Preserve exact nanoseconds and parent IDs.
+- Separate reported outcomes, missing approvals, inferred effects, and unauthenticated observations; never claim runtime enforcement.
+- Add text, JSON, Markdown, and standalone offline HTML output; optional reported-error exit gate and exclusive output-file creation.
+- Omit raw arguments, results, prompts, error details, and URI payloads. Reject malformed inputs, duplicate IDs/attributes, and parent cycles without partial analysis.
+- Add synthetic fixtures and 29 trace regression tests (90 total). Real production export validation and hosted Actions runs remain unverified.
+
+### Coldgate naming
 
 - Consolidate commands as `coldgate scan` and `coldgate diff`; use `@coldgate/authority`, `@coldgate/cli`, and `@coldgate/diff` workspace packages.
 - Rename the connection manifest to `coldgate.project.json` and the Action to `.github/actions/coldgate-diff`. Update existing integrations to these names.

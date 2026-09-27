@@ -33,3 +33,9 @@ Coldgate Diff consumes untrusted JSON reports under 8 MB each. It checks require
 Parameter schema values are not emitted. Their fingerprint is not encryption: someone who knows all but a small secret can test guesses against a hash. Do not embed real secrets in schemas or commit sensitive reports. Source paths, property names, credential identifiers and resource names can still be sensitive.
 
 Input schema processing is bounded to depth 64 and 10,000 visited elements. General JSON Schema implication is out of scope. An unchanged diff means no supported represented claim changed, not that authority is unchanged at runtime. A missing record does not prove revocation. The CI Action must run from a trusted pinned revision; evaluating untrusted snapshots does not require executing the code in their PR.
+
+## Imported traces (0.4.0)
+
+Telemetry is untrusted evidence, not proof of side effects, approval correctness, caller identity, completeness, or enforcement. The trace importer never executes recorded calls. It omits raw payloads and maps only documented fields plus explicitly named Coldgate metadata extensions. These extensions are assertions, not controls. Inferred effects stay INFERRED even when a tool span reports OK.
+
+The CLI uses bounded reads of regular files, rejects direct symlinks, and never echoes malformed JSON or error details. Duplicate IDs, duplicate attributes, parent cycles, and invalid consumed fields fail the document without partial output. HTML escapes all displayed input, contains no scripts/network assets, and has a restrictive CSP. Output files use exclusive creation to prevent overwrites. Retained labels/IDs/hosts may still be sensitive; no universal anonymization is claimed. Sampling and omitted span types prevent completeness claims.
