@@ -4,7 +4,14 @@
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): v is Obj => v !== null && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
-const names = (v: unknown): v is string[] => Array.isArray(v) && v.every(text) && new Set(v).size === v.length;
+// Semantic strings must survive display/redaction unchanged; reject unsupported values
+// instead of collapsing distinct identities or boundaries to the same sanitized text.
+const semanticText = (v: unknown): v is string => text(v) && v.length <= 4096 &&
+  !/[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]/.test(v) &&
+  !/(?:token|secret|password|api[_-]?key|authorization)\s*[:=]\s*\S+/i.test(v);
+const identity = (v: unknown): v is string => semanticText(v) && v.length <= 120;
+const distinct = (v: unknown, check: (x: unknown) => boolean): v is string[] => Array.isArray(v) && v.every(check) && new Set(v).size === v.length;
+const names = (v: unknown): v is string[] => distinct(v, identity);
 const owns = (v: Obj, k: string) => Object.hasOwn(v, k);
 
 export function validateInput(input: unknown): string[] {
@@ -12,14 +19,17 @@ export function validateInput(input: unknown): string[] {
   const fail = (path: string, message: string) => { if (errors.length < 50) errors.push(`${path} ${message}`); };
   if (!obj(input)) return ['Root must be a JSON object'];
   const root = input;
+  if (owns(root, 'serverName') && !identity(root.serverName)) return ['serverName must be a supported identifier of at most 120 characters'];
   const formats = ['tools', 'hostedMcpTools', 'mcpServers', 'servers'].filter(k => owns(root, k));
   if (formats.length !== 1) return [formats.length ? 'Ambiguous input: provide exactly one supported root container' : 'Unsupported JSON: expected tools, hostedMcpTools, mcpServers, or servers'];
   const lists = (v: Obj, path: string) => {
     for (const k of ['allowedPaths', 'allowedHosts', 'repositories', 'scopes'])
-      if (owns(v, k) && !names(v[k])) fail(`${path}.${k}`, 'must be an array of distinct nonempty strings');
+      if (owns(v, k) && !distinct(v[k], semanticText)) fail(`${path}.${k}`, 'must contain distinct supported strings of at most 4096 characters');
   };
   const overlay = (v: Obj, path: string) => {
     lists(v, path);
+    if (owns(v, 'env') && !obj(v.env)) fail(`${path}.env`, 'must be an object');
+    else if (obj(v.env) && !Object.keys(v.env).every(identity)) fail(`${path}.env`, 'contains an unsupported credential identifier');
     if (owns(v, 'requiresApproval') && typeof v.requiresApproval !== 'boolean') fail(`${path}.requiresApproval`, 'must be boolean');
     if (owns(v, 'approval') && !['inherited', 'conditional'].includes(v.approval as string)) fail(`${path}.approval`, 'must be inherited or conditional');
     if (owns(v, 'approval') && owns(v, 'requiresApproval')) fail(path, 'contains conflicting approval fields');
@@ -33,7 +43,7 @@ export function validateInput(input: unknown): string[] {
       const locator = `${path}[${i}]`;
       if (!obj(value)) { fail(locator, 'must be an object'); continue; }
       const name = key ?? value.name;
-      if (!text(name)) fail(locator, 'requires a nonempty tool name');
+      if (!identity(name)) fail(locator, 'requires a supported tool name of at most 120 characters');
       else if (seen.has(name)) fail(locator, 'duplicates a tool name');
       else seen.add(name);
       if (key !== undefined && owns(value, 'name') && value.name !== key) fail(locator, 'has a name different from its map key');
@@ -76,9 +86,8 @@ export function validateInput(input: unknown): string[] {
     if (Object.keys(servers).length > 100) return [`${key} exceeds 100 servers`];
     Object.entries(servers).forEach(([name, v], i) => {
       const path = `${key}[${i}]`;
-      if (!text(name) || !obj(v)) { fail(path, 'requires a named server object'); return; }
+      if (!identity(name) || !obj(v)) { fail(path, 'requires a supported named server object'); return; }
       overlay(v, path);
-      if (owns(v, 'env') && !obj(v.env)) fail(`${path}.env`, 'must be an object');
       if (owns(v, 'tools')) tools(v.tools, `${path}.tools`);
     });
   } else if (owns(root, 'hostedMcpTools')) {
@@ -86,7 +95,7 @@ export function validateInput(input: unknown): string[] {
     if (root.hostedMcpTools.length > 100) return ['hostedMcpTools exceeds 100 servers'];
     root.hostedMcpTools.forEach((v, i) => {
       const path = `hostedMcpTools[${i}]`;
-      if (!obj(v) || !text(v.serverLabel)) { fail(path, 'requires serverLabel'); return; }
+      if (!obj(v) || !identity(v.serverLabel)) { fail(path, 'requires a supported serverLabel'); return; }
       overlay(v, path);
       if (owns(v, 'tools')) tools(v.tools, `${path}.tools`);
       if (owns(v, 'requireApproval')) policy(v.requireApproval, `${path}.requireApproval`, 'toolNames');
@@ -98,7 +107,7 @@ export function validateInput(input: unknown): string[] {
       root.tools.forEach((v, i) => {
         const path = `tools[${i}]`;
         if (!obj(v) || v.type !== 'mcp') { fail(path, 'is unsupported; this adapter analyzes MCP entries only'); return; }
-        if (!text(v.server_label)) fail(path, 'requires server_label');
+        if (!identity(v.server_label)) fail(path, 'requires a supported server_label');
         if (owns(v, 'require_approval')) policy(v.require_approval, `${path}.require_approval`, 'tool_names');
         if (owns(v, 'allowed_tools')) {
           const a = v.allowed_tools;

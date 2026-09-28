@@ -19,7 +19,7 @@ test('pilot summary counts evidence and rules without copying report identifiers
   assert.ok(!JSON.stringify(summary).includes('Deletes records'));
 });
 
-test('pilot command fails closed for failed reports, unknown findings, and symlinks', async () => {
+test('pilot command fails closed for failed reports, unknown findings, and symlinks', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'coldgate-pilot-'));
   const report = scanConfig({ tools: [{ name: 'read_entry' }] }, 'internal/source.json');
   const path = join(dir, 'scan.json');
@@ -39,7 +39,13 @@ test('pilot command fails closed for failed reports, unknown findings, and symli
     assert.ok(!stderr.includes('PRIVATE_FAILURE'));
     await writeFile(path, JSON.stringify([{ ...report, findings: [{ level: 'WARN', rule: 'PRIVATE_RULE', recordId: report.records[0].id }] }]));
     assert.equal(await main([path], output, errors), 2);
-    await symlink(path, link);
-    assert.equal(await main([link], output, errors), 2);
+    await t.test('rejects a symlink when the host permits creating one', async t => {
+      try { await symlink(path, link); }
+      catch (error) {
+        if (process.platform === 'win32' && (error as NodeJS.ErrnoException).code === 'EPERM') return t.skip('Windows symlink creation requires permission');
+        throw error;
+      }
+      assert.equal(await main([link], output, errors), 2);
+    });
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
