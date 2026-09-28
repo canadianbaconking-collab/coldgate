@@ -34,6 +34,8 @@ npm install --ignore-scripts ..\coldgate-0.8.0.tgz
 
 Use `coldgate scan` to analyze configuration and `coldgate diff` to compare snapshots. An explicit JSON file may have any name. For a directory, it checks `mcp.json`, `.mcp.json`, `claude_desktop_config.json`, `coldgate.json`, `openai-hosted-mcp.json`, `openai-responses.json`, and `tools.json` in the root, `.cursor`, `.vscode`, and `fixtures`. It does not recursively crawl arbitrary source trees. No matches, bad JSON, or unreadable input exits 2. `--fail-on warning` exits 1 when a WARN finding occurs; otherwise findings do not change exit status. A zero exit code does not certify a tool.
 
+Boundary and scope values are preserved exactly up to 4096 characters; supported server, tool, and credential identifiers are limited to 120 characters. Control/bidirectional formatting characters and credential-assignment text in these semantic fields fail validation without being echoed. Values are never silently truncated or redacted into matching identities. Older saved snapshots may already contain truncated values; rescan their original configurations before relying on a comparison of long values. Exact directory/domain-to-`*` changes are classified as `boundaries:widening`, including the scanner's arbitrary-filesystem/network representations.
+
 ## Connect native approval policy to a saved tool inventory
 
 ```powershell

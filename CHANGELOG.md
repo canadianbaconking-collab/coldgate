@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Review fixes
+
+- Preserve full boundary and scope values up to 4096 characters for comparison. Reject identifiers over 120 characters and semantic values containing control characters or credential-assignment text instead of sanitizing distinct authority values into identical evidence. Diagnostics do not echo rejected values.
+- Classify exact directory/domain transitions to arbitrary filesystem/network boundaries as widening, and the reverse as narrowing, so selected category gates catch them.
+- Use filesystem-safe fixture URLs on Windows. Skip only symlink-specific subtests when Windows refuses symlink creation; all other assertions still run.
+
 ## 0.8.0 — Pilot readiness
 
 - Add a repository-only local helper to summarize validated JSON scans as counts of evidence coverage, conditional selections, and fixed finding categories, without copying report identifiers or text. Reject failed or malformed reports and symlink inputs.
