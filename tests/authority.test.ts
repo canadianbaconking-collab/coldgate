@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { scanConfig, scanFile, inferEffects } from '../packages/authority/src/index.ts';
 import { main, renderText } from '../packages/cli/src/cli.ts';
 
-const fixture = (name: string) => new URL(`../fixtures/${name}`, import.meta.url).pathname;
+const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
 const capture = () => {
   let text = '';
   return { stream: { write: (s: string) => { text += s; return true; } } as typeof process.stdout, get: () => text };

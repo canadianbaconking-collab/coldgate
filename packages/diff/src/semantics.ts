@@ -26,7 +26,9 @@ export function boundaryDirection(before: string[], after: string[]): 'widening'
   // Only a single exact boundary replaced by a wildcard of the same kind is directional.
   if (before.length !== 1 || after.length !== 1) return 'unresolved';
   const [oldKind, oldValue] = before[0].split(/:(.*)/s), [newKind, newValue] = after[0].split(/:(.*)/s);
-  if (oldKind !== newKind || oldKind === 'unknown') return 'unresolved';
+  // The scanner represents an unrestricted directory/domain with its arbitrary kind.
+  const family = (kind: string) => kind === 'arbitrary_filesystem' ? 'directory' : kind === 'arbitrary_network' ? 'domain' : kind;
+  if (family(oldKind) !== family(newKind) || oldKind === 'unknown') return 'unresolved';
   // A pre-existing pattern or empty value is not an exact boundary.
   const exact = (value: string) => !!value && !/[?*]/.test(value);
   if (newValue === '*' && exact(oldValue)) return 'widening';

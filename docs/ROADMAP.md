@@ -2,6 +2,18 @@
 
 Status: v0.8.0 is the pilot-readiness checkpoint. v0.7.0 hardened integration, v0.6.0 added authority change semantics, and v0.5 added evidence measurement. The source of authority remains explicit claims, not one safety score.
 
+## Pending review fixes — PR #1
+
+As checked on 2026-10-18, [PR #1](https://github.com/canadianbaconking-collab/coldgate/pull/1) is open and draft. Its reviewed code commit is `6adba3490ffa12b944fed6700a1024027e5e5a4a`; GitHub reports it mergeable, but there are no submitted reviews or review threads. Mergeability does not establish merge readiness.
+
+The PR preserves supported boundary/scope values rather than truncating them, rejects lossy semantic identifiers, and classifies exact filesystem/network-to-wildcard transitions directionally. Its regression tests exercise scanner-to-diff change gates and invalid inputs. The PR description reports 108 tests passed on Windows/Node 24.19.0, two permission-dependent symlink subtests skipped, successful JavaScript/compiled CLI checks, and isolated offline package verification. These are recorded local results, not independently reproduced results from this review.
+
+**Validation gate completed on 2026-10-18:** [hosted PR run 39148575539](https://github.com/canadianbaconking-collab/coldgate/actions/runs/39148575539) passed all three jobs. Candidate head `63331bb2ddf89694e9c228b2ee4d83003ed69532` was tested through GitHub's synthetic merge commit `7ed7f06a473be74d7568d885385c01fa521746f2` against main `87844dd8bbfeefae60202d175f18eefc51eecb0f`.
+
+On Ubuntu, Node 22.18.0 and 24.21.0 each passed 110 tests with zero failures and zero skips. Job logs confirm both permission-dependent symlink subtests executed and passed. Both package jobs built and verified the 23-file, 33.3 KiB tarball through isolated offline installation and scan, diff, and trace checks. The composite Action job passed its expected-failure and expected-success category gates.
+
+The workflow now triggers for pull requests targeting main as well as main pushes and manual dispatch; the main-only job conditions were removed. Read-only contents permission, pinned actions, and disabled persisted checkout credentials remain. This closes the missing hosted-validation gate for the cited candidate. PR #1 remains draft and unmerged; passing CI does not constitute review approval or a release decision.
+
 ## v0.5 — Evidence Depth (completed)
 
 | Checkpoint | Deliverable | Acceptance |
@@ -13,7 +25,7 @@ Status: v0.8.0 is the pilot-readiness checkpoint. v0.7.0 hardened integration, v
 
 See [Evidence Depth](EVIDENCE.md) and the [pinned corpus](../fixtures/corpus/README.md) for the measured development/holdout split. The v0.4 trace model stays a separate OBSERVED source. A recorded tool call establishes a telemetry assertion, while its side effects can remain INFERRED or UNKNOWN. A future join between static and trace records needs explicit matching identities, trace completeness caveats, and separate claims. Do not silently merge same-named tools or treat approval records as enforcement.
 
-No new configuration adapters during Evidence Depth. Supported old report schema 0.1 remains readable, with optional fields added only when justified. Older saved snapshots should remain valid for diff comparison. Breaking schema revisions require explicit migration and documentation.
+No new configuration adapters during Evidence Depth. Supported old report schema 0.1 remains readable, with optional fields added only when justified. Older saved snapshots remain schema-readable, but snapshots produced before PR #1 may contain truncated boundary or scope values. Rescan their original configurations before relying on comparisons of long values; schema validity cannot recover lost information. Breaking schema revisions require explicit migration and documentation.
 
 ## v0.6 — Authority change semantics
 

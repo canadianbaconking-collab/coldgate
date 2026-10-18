@@ -63,7 +63,7 @@ function boundaries(tool: Record<string, unknown>, server: Record<string, unknow
   for (const [owner, locator] of [[server, serverPath], [tool, path]] as const) {
     for (const [key, kind] of [['allowedPaths', 'directory'], ['allowedHosts', 'domain'], ['repositories', 'repository_pattern']] as const) {
       const values = strings(owner[key]);
-      if (values) for (const v of values) found.push({ kind: v === '*' && kind === 'domain' ? 'arbitrary_network' : v === '*' && kind === 'directory' ? 'arbitrary_filesystem' : kind, value: safe(v), claim: declared(safe(v), `${locator}.${key}`) });
+      if (values) for (const v of values) found.push({ kind: v === '*' && kind === 'domain' ? 'arbitrary_network' : v === '*' && kind === 'directory' ? 'arbitrary_filesystem' : kind, value: v, claim: declared(v, `${locator}.${key}`) });
     }
   }
   return found.length ? found : [{ kind: 'unknown', value: 'unknown', claim: unknown('unknown', path) }];
@@ -105,7 +105,7 @@ function normalize(provider: string, name: string, tool: Record<string, unknown>
       effectEvidence: evidence,
       boundaries: boundaries(tool, server, path, serverPath), destination: unknown('unknown', path),
       credentialNames: envNames.length ? declared(envNames, `${serverPath}.env keys`) : unknown([], serverPath),
-      scopes: scope ? declared(scope.map(safe), `${path}.scopes`) : unknown([], path),
+      scopes: scope ? declared(scope, `${path}.scopes`) : unknown([], path),
       approval: ap ?? clientApproval(tool, server, path, serverPath),
       delegation: unknown('unknown', path), persistence: unknown('unknown', path), annotations: annotations(tool),
     },

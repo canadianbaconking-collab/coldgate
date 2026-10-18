@@ -116,12 +116,20 @@ test('CLI outputs, error gates and exclusive file creation work', async () => {
     for (const args of [[], ['--format'], ['examples/trace/openai.json', '--output'], ['examples/trace/openai.json', '--format', 'unknown']]) assert.equal(await main(args, output(sink()), output(e)), 2);
   } finally { await rm(dir, {recursive: true, force: true}); }
 });
-test('CLI rejects symlinks, directories and oversized trace inputs', async () => {
+test('CLI rejects symlinks, directories and oversized trace inputs', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'coldgate-trace-input-'));
   try {
-    const link = join(dir, 'link.json'); await symlink(resolve('examples/trace/openai.json'), link);
     const large = join(dir, 'large.json'); await writeFile(large, ' '.repeat(8_000_001));
-    for (const file of [dir, link, large]) assert.equal(await main([file], output(sink()), output(sink())), 2);
+    for (const file of [dir, large]) assert.equal(await main([file], output(sink()), output(sink())), 2);
+    await t.test('rejects a symlink when the host permits creating one', async t => {
+      const link = join(dir, 'link.json');
+      try { await symlink(resolve('examples/trace/openai.json'), link); }
+      catch (error) {
+        if (process.platform === 'win32' && (error as NodeJS.ErrnoException).code === 'EPERM') return t.skip('Windows symlink creation requires permission');
+        throw error;
+      }
+      assert.equal(await main([link], output(sink()), output(sink())), 2);
+    });
   } finally { await rm(dir, {recursive: true, force: true}); }
 });
 test('unified Coldgate command dispatches trace and rejects unknown commands', () => {
