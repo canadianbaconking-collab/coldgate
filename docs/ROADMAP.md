@@ -2,9 +2,9 @@
 
 Status: v0.8.0 is the pilot-readiness checkpoint. v0.7.0 hardened integration, v0.6.0 added authority change semantics, and v0.5 added evidence measurement. The source of authority remains explicit claims, not one safety score.
 
-## Pending review fixes — PR #1
+## Merged review fixes — PR #1
 
-As checked on 2026-10-18, [PR #1](https://github.com/canadianbaconking-collab/coldgate/pull/1) is open and draft. Its reviewed code commit is `6adba3490ffa12b944fed6700a1024027e5e5a4a`; GitHub reports it mergeable, but there are no submitted reviews or review threads. Mergeability does not establish merge readiness.
+On 2026-10-18, [PR #1](https://github.com/canadianbaconking-collab/coldgate/pull/1) merged into main at merge commit `cb63c063c53981dc5ce9c0f468f11fea6d0408e4`, with final PR head `f32595f784111e0e07b1578d75bbabed527aa37f`. The [Codex review summary](https://github.com/canadianbaconking-collab/coldgate/pull/1#issuecomment-6252848480) records code review completed with no findings for that final head; it does not record a completed security review.
 
 The PR preserves supported boundary/scope values rather than truncating them, rejects lossy semantic identifiers, and classifies exact filesystem/network-to-wildcard transitions directionally. Its regression tests exercise scanner-to-diff change gates and invalid inputs. The PR description reports 108 tests passed on Windows/Node 24.19.0, two permission-dependent symlink subtests skipped, successful JavaScript/compiled CLI checks, and isolated offline package verification. These are recorded local results, not independently reproduced results from this review.
 
@@ -12,7 +12,7 @@ The PR preserves supported boundary/scope values rather than truncating them, re
 
 On Ubuntu, Node 22.18.0 and 24.21.0 each passed 110 tests with zero failures and zero skips. Job logs confirm both permission-dependent symlink subtests executed and passed. Both package jobs built and verified the 23-file, 33.3 KiB tarball through isolated offline installation and scan, diff, and trace checks. The composite Action job passed its expected-failure and expected-success category gates.
 
-The workflow now triggers for pull requests targeting main as well as main pushes and manual dispatch; the main-only job conditions were removed. Read-only contents permission, pinned actions, and disabled persisted checkout credentials remain. This closes the missing hosted-validation gate for the cited candidate. PR #1 remains draft and unmerged; passing CI does not constitute review approval or a release decision.
+The workflow now triggers for pull requests targeting main as well as main pushes and manual dispatch; the main-only job conditions were removed. Read-only contents permission, pinned actions, and disabled persisted checkout credentials remain. This closes the missing hosted-validation gate for the cited candidate. The final PR head differs from that candidate only in this roadmap's validation record; the cited run remains evidence for the exact commits above, not a separate run of the final head or merge commit. PR #1's merge and completed code review are recorded separately from CI success. They do not establish npm publication, independent pilot results, external-repository workflow validation, or real production trace-export validation; those gaps remain.
 
 ## v0.5 — Evidence Depth (completed)
 
